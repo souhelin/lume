@@ -26,14 +26,20 @@ Repita a opção para mais de um host:
 lume --permitir-rede api.exemplo.com --permitir-rede arquivos.exemplo.com programa.lume
 ```
 
-A CLI informa os hosts autorizados na saída de diagnóstico. Sem `--permitir-rede`, todas as chamadas externas são bloqueadas. O mesmo parâmetro funciona no console interativo.
+A CLI informa cada solicitação de acesso externo na saída de diagnóstico (stderr), inclusive quando o host não está autorizado. Sem `--permitir-rede`, todas as chamadas externas são bloqueadas. O mesmo parâmetro funciona no console interativo.
 
 ### Pela API Python
 
 ```python
 from lume import Interpretador
 
-interpretador = Interpretador(hosts_rede_permitidos=["api.exemplo.com"])
+def avisar(host):
+    print(f"Solicitação de acesso externo: {host}")
+
+interpretador = Interpretador(
+    hosts_rede_permitidos=["api.exemplo.com"],
+    aviso_rede=avisar,
+)
 
 # O hospedeiro pode conceder ou revogar hosts durante a execução.
 interpretador.permissoes_rede.permitir_host("arquivos.exemplo.com")
