@@ -287,6 +287,8 @@ def importar_openwordnet_ttl(
     lexicon: Lexicon, arquivo_palavras: str | Path,
     arquivo_synsets: str | Path, arquivo_palavras_sentido: str | Path,
     arquivo_relacoes: str | Path, *, versao: str,
+    arquivo_morfosemantico: str | Path | None = None,
+    arquivo_same_as: str | Path | None = None,
     confirmar_direitos: bool = False,
 ) -> ResultadoImportacao:
     """Importa OpenWordNet-PT Turtle: lemas, glossas, sentidos e relações.
@@ -446,39 +448,44 @@ def importar_openwordnet_ttl(
             if entrada_id and entrada_id not in membros_por_uri[uri]:
                 membros_por_uri[uri].append(entrada_id)
 
-    grafo = Graph()
-    grafo.parse(str(arquivo_relacoes), format="turtle")
     relacoes_lote: list[tuple[str, str, str, str]] = []
     total_relacoes = 0
-    for sujeito, predicado, objeto in grafo:
-        tipo = _local_name(predicado)
-        if tipo in {"type", "label"}:
+    arquivos_relacionais = (arquivo_relacoes, arquivo_morfosemantico, arquivo_same_as)
+    for arquivo_relacional in arquivos_relacionais:
+        if arquivo_relacional is None:
             continue
-        origem = membros_por_uri.get(sujeito)
-        destino = membros_por_uri.get(objeto)
-        if origem is None:
-            uri_palavra = palavra_do_sentido.get(sujeito)
-            entrada_id = id_por_uri.get(uri_palavra)
-            origem = [entrada_id] if entrada_id else []
-        if destino is None:
-            uri_palavra = palavra_do_sentido.get(objeto)
-            entrada_id = id_por_uri.get(uri_palavra)
-            destino = [entrada_id] if entrada_id else []
-        for origem_id in origem:
-            for destino_id in destino:
-                if origem_id and destino_id and origem_id != destino_id:
-                    relacoes_lote.append((origem_id, destino_id, tipo, fonte))
-        if len(relacoes_lote) >= 5000:
-            with lexicon._lock, lexicon._db:
-                lexicon._db.executemany(
-                    """
-                    INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
-                    VALUES (?, ?, ?, ?)
-                    """,
-                    relacoes_lote,
-                )
-            total_relacoes += len(relacoes_lote)
-            relacoes_lote.clear()
+        grafo = Graph()
+        grafo.parse(str(arquivo_relacional), format="turtle")
+        for sujeito, predicado, objeto in grafo:
+            tipo = _local_name(predicado)
+            if tipo in {"type", "label"}:
+                continue
+            origem = membros_por_uri.get(sujeito)
+            destino = membros_por_uri.get(objeto)
+            if origem is None:
+                uri_palavra = palavra_do_sentido.get(sujeito)
+                entrada_id = id_por_uri.get(uri_palavra)
+                origem = [entrada_id] if entrada_id else []
+            if destino is None:
+                uri_palavra = palavra_do_sentido.get(objeto)
+                entrada_id = id_por_uri.get(uri_palavra)
+                destino = [entrada_id] if entrada_id else []
+            for origem_id in origem:
+                for destino_id in destino:
+                    if origem_id and destino_id and origem_id != destino_id:
+                        relacoes_lote.append((origem_id, destino_id, tipo, fonte))
+            if len(relacoes_lote) >= 5000:
+                with lexicon._lock, lexicon._db:
+                    lexicon._db.executemany(
+                        """
+                        INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                        relacoes_lote,
+                    )
+                total_relacoes += len(relacoes_lote)
+                relacoes_lote.clear()
+        del grafo
     if relacoes_lote:
         with lexicon._lock, lexicon._db:
             lexicon._db.executemany(
