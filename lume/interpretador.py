@@ -198,6 +198,18 @@ class Interpretador:
         except OSError as erro:
             raise ErroExecucao(f"não foi possível escrever o arquivo: {erro}") from erro
 
+    def _escrever_bytes(self, caminho: object, dados: bytes) -> None:
+        arquivo = self._resolver_caminho(caminho)
+        if not isinstance(dados, bytes):
+            raise ErroExecucao("o conteúdo binário precisa ser bytes")
+        if len(dados) > 1_048_576:
+            raise ErroExecucao("o download ultrapassa o limite de escrita de 1 MiB")
+        try:
+            with arquivo.open("wb") as destino:
+                destino.write(dados)
+        except OSError as erro:
+            raise ErroExecucao(f"não foi possível gravar o download: {erro}") from erro
+
     def _cliente_http(self):
         # Importação tardia: programas offline não carregam o cliente HTTP.
         if self._cliente_rede is None:
@@ -222,11 +234,7 @@ class Interpretador:
         if not isinstance(url, str):
             raise ErroExecucao("o endereço do download precisa ser um texto")
         dados = self._cliente_http().requisitar(url)
-        try:
-            conteudo = dados.decode("utf-8")
-        except UnicodeDecodeError as erro:
-            raise ErroExecucao("o download não é um arquivo de texto UTF-8") from erro
-        self._escrever_arquivo(caminho, conteudo)
+        self._escrever_bytes(caminho, dados)
         return len(dados)
 
     def _passo(self) -> None:
