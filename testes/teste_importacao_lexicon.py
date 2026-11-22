@@ -13,8 +13,8 @@ from pathlib import Path
 from lume import (
     EntradaLexical, FonteLexical, Interpretador, InterpretadorSemantico,
     Lexicon, DesambiguadorContextual, importar_fserb_lexico,
-    importar_fserb_conjugacoes, importar_openwordnet_tsv,
-    importar_openwordnet_ttl,
+    importar_fserb_conjugacoes, importar_fserb_verbos, importar_fserb_icf,
+    importar_openwordnet_tsv, importar_openwordnet_ttl,
 )
 
 
@@ -49,6 +49,21 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
             self.lexicon.buscar("cantamos")[0].entrada.classe_gramatical,
             "forma_verbal_sem_lema",
         )
+
+    def test_importa_lista_de_verbos_e_pontuacao_icf(self):
+        verbos = self.root / "verbos"
+        icf = self.root / "icf"
+        verbos.write_text("cantar\\nser\\n", encoding="utf-8")
+        icf.write_text("cantar,5.23\\nser,3.10\\n", encoding="utf-8")
+        importar_fserb_verbos(
+            self.lexicon, verbos, versao="fixture-1", confirmar_direitos=True
+        )
+        resultado = importar_fserb_icf(
+            self.lexicon, icf, versao="fixture-1", confirmar_direitos=True
+        )
+        self.assertEqual(resultado.registros_importados, 2)
+        self.assertEqual(self.lexicon.buscar("cantar")[0].entrada.classe_gramatical, "verbo")
+        self.assertEqual(self.lexicon.frequencia("cantar"), (5.23,))
 
     def test_openwordnet_preserva_multiplos_synsets_para_mesma_palavra(self):
         arquivo = self.root / "wn-data-por.tab"
