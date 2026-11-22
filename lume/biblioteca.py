@@ -119,5 +119,9 @@ def registrar_biblioteca(interpretador: object) -> None:
     registrar("anexar_arquivo", 2, 2, lambda caminho, texto: interpretador._escrever_arquivo(caminho, texto, anexar=True))
     registrar("existe_arquivo", 1, 1, lambda caminho: interpretador._resolver_caminho(caminho).is_file())
     registrar("juntar", 2, 2, lambda lista, separador: separador.join(lista) if isinstance(lista, (list, tuple)) and isinstance(separador, str) and all(isinstance(item, str) for item in lista) else interpretador._erro_tipo("'juntar' exige uma lista de textos e um separador"))
+    # As funções só alcançam a rede quando o programa as chama e o host está autorizado.
+    registrar("http_obter", 1, 1, interpretador._http_obter)
+    registrar("http_enviar", 2, 2, interpretador._http_enviar)
+    registrar("baixar", 2, 2, interpretador._baixar_arquivo)
 
 
