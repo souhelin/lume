@@ -4,28 +4,31 @@ A licença MIT do código-fonte do LUME não substitui nem relicencia os conjunt
 
 ## fserb/pt-br
 
-O repositório declara MIT. O aviso de copyright e a licença integral precisam acompanhar qualquer redistribuição de conteúdo efetivamente coberto. O README indica que o léxico foi reunido de múltiplas fontes dicionarísticas; a cobertura jurídica dos dados upstream ainda precisa ser confirmada. Até essa confirmação, o arquivo lexical agregado não deve ser distribuído dentro do LUME.
+O repositório declara MIT e a importação registra essa declaração, incluindo o aviso de copyright de Fernando Serboncini. O README descreve o léxico como agregado de múltiplas fontes dicionarísticas; a cobertura dos dados de terceiros não está individualizada. Por isso, os importadores exigem aceite explícito e o LUME não empacota esses arquivos automaticamente. A confirmação do operador não equivale a parecer jurídico.
 
-## OpenWordNet-PT
+## OpenWordNet-PT original
 
-O projeto declara CC BY 4.0. Redistribuições de conteúdo coberto precisam manter atribuição, referência à licença e indicação de modificações. A própria licença do projeto aponta Princeton WordNet 3.0 como base. A licença da Princeton permite distribuição sob condições próprias, incluindo o aviso “WordNet 3.0 Copyright 2006 by Princeton University” e a preservação do texto de licença e disclaimer.
+O projeto original declara CC BY 4.0. Redistribuições de conteúdo coberto precisam manter atribuição, referência à licença e indicação de modificações. O histórico de construção cita Princeton WordNet 3.0, UWN, MENTA, EuroWordNet e glossas candidatas da Wikipédia; mantenha os avisos e a atribuição do projeto upstream. O importador Turtle registra CC BY 4.0 por versão.
 
-Atribuição e licença de OWN-PT e WordNet devem ser documentadas separadamente. A proveniência histórica de UWN, MENTA, EuroWordNet e glossas deve ser considerada antes de selecionar campos.
+## Exportação OMW
+
+O repositório omwn/omw-data para português declara CC BY-SA 3.0 e menciona material derivado de WordNet e Wiktionary. A exportação TSV é tratada como uma fonte distinta e mantém sua licença CC BY-SA 3.0; não aplicar a licença MIT do LUME aos dados.
 
 ## Corpus Carolina
 
-Os documentos possuem licenças heterogêneas indicadas nos metadados. O cabeçalho do corpus é CC BY-NC-SA 4.0. Conteúdo sob cláusula NãoComercial não pode ser incorporado a uma distribuição comercial. A licença de um documento não deve ser inferida a partir da licença do cabeçalho ou de outro documento.
+Os documentos têm licenças heterogêneas indicadas nos metadados; o cabeçalho do corpus é CC BY-NC-SA 4.0. Não importar o corpus integral para uma distribuição comercial sem avaliar cada documento e as condições aplicáveis.
 
 ## Política
 
-- Nenhum conjunto é incluído automaticamente por este módulo.
 - Não remover avisos de copyright ou atribuição.
 - Não aplicar a licença do LUME a dados de terceiros.
-- Não empacotar dados com licença ou procedência incerta.
-- Consultar orientação jurídica especializada antes de distribuição comercial de bases compostas.
+- Não empacotar conjuntos com licença ou procedência incerta.
+- Fixar versão e checksum dos dados usados.
+- Consultar orientação jurídica especializada antes de redistribuir bases compostas.
 
 Links:
 - MIT: https://opensource.org/license/mit/
 - CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+- CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/
 - CC BY-NC-SA 4.0: https://creativecommons.org/licenses/by-nc-sa/4.0/
-- WordNet: https://wordnet.princeton.edu/license-and-commercial-use
+- Princeton WordNet: https://wordnet.princeton.edu/license-and-commercial-use
