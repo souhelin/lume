@@ -84,6 +84,13 @@ class TestesLume(unittest.TestCase):
         with self.assertRaisesRegex(ErroExecucao, "dividir por zero"):
             self.executar("mostrar 10 / 0")
 
+    def test_erro_de_execucao_preserva_linha_e_coluna(self) -> None:
+        with self.assertRaises(ErroExecucao) as contexto:
+            self.executar('mostrar "ok"\nmostrar 10 / 0')
+        self.assertIsNotNone(contexto.exception.posicao)
+        self.assertEqual(contexto.exception.posicao.linha, 2)
+        self.assertEqual(contexto.exception.posicao.coluna, 1)
+
     def test_nome_nao_definido(self) -> None:
         with self.assertRaisesRegex(ErroExecucao, "não definido"):
             self.executar("mostrar desconhecido")
@@ -194,7 +201,10 @@ class TestesLume(unittest.TestCase):
 
     def test_tratamento_estruturado_de_erro(self) -> None:
         fonte = 'tente\n lance "falha controlada"\ncapture erro\n mostrar erro\nfim'
-        self.assertEqual(self.executar(fonte), ["Erro de execução: falha controlada"])
+        saidas = self.executar(fonte)
+        self.assertEqual(len(saidas), 1)
+        self.assertIn("falha controlada", saidas[0])
+        self.assertIn("linha 2", saidas[0])
 
     def test_finalmente_e_executado_apos_erro(self) -> None:
         fonte = 'tente\n lance "falha"\nfinalmente\n mostrar "finalizado"\nfim'

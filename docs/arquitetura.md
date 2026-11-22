@@ -56,6 +56,7 @@ lume/
   lexer.py          análise léxica
   nos.py            nós da AST
   parser.py         gramática estruturada
+  formatador.py     normalização determinística de recuo
   representacao.py  representação intermediária
   semantica.py      compilador, contexto e validador semântico
   tokens.py         estrutura dos tokens
@@ -67,3 +68,8 @@ lume/
 ## Limites conhecidos
 
 O front-end natural é um conjunto explícito de padrões, não um analisador de português irrestrito. A inferência de tipos é parcial. Ainda não existem sistema de módulos, manipulação de arquivos na linguagem, exceções definidas pelo usuário, depurador, bytecode ou compilador nativo. O runtime de referência usa a memória e o coletor de lixo do Python. Essas limitações devem ser consideradas antes de avaliar desempenho ou segurança em produção.
+
+
+## Diagnósticos e posição de origem
+
+O parser associa a posição inicial de cada instrução à AST. A conversão para IR preserva a posição, e o executor anexa essa posição a erros de execução que ainda não possuem uma localização mais específica. Erros semânticos são associados à instrução validada. A CLI apresenta arquivo, linha, coluna e uma indicação visual do ponto de origem.

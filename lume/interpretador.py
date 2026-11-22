@@ -10,6 +10,7 @@ from typing import Callable
 from .ambiente import Ambiente
 from .erros import (
     ErroExecucao,
+    ErroLume,
     SinalContinuar,
     SinalInterromper,
     SinalRetorno,
@@ -99,7 +100,12 @@ class Interpretador:
         try:
             for declaracao in declaracoes:
                 self._passo()
-                self._executar_instrucao(declaracao)
+                try:
+                    self._executar_instrucao(declaracao)
+                except ErroLume as erro:
+                    if erro.posicao is None:
+                        erro.posicao = getattr(declaracao, "posicao", None)
+                    raise
         finally:
             self.ambiente = anterior
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .erros import ErroSemantico
+from .erros import ErroSemantico, Posicao
 from .nos import (
     Atribuir, AtribuirIndice, Tentar, Lancar, Importar, Binaria, Chamada, Condicional, Continuar, Definir,
     ExpressaoInstrucao, FuncaoDeclaracao, Indice, Interromper, Enquanto,
@@ -28,6 +28,7 @@ class ExpressaoIR:
 class InstrucaoIR:
     operacao: str
     argumentos: tuple[Any, ...] = ()
+    posicao: Posicao | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +44,7 @@ def _serializar(valor: Any) -> Any:
         return {
             "operacao": valor.operacao,
             "argumentos": [_serializar(item) for item in valor.argumentos],
+            **({"posicao": {"linha": valor.posicao.linha, "coluna": valor.posicao.coluna}} if isinstance(valor, InstrucaoIR) and valor.posicao else {}),
         }
     if isinstance(valor, ProgramaIR):
         return valor.para_dicionario()
@@ -92,23 +94,23 @@ def instrucao_para_ir(no: object) -> InstrucaoIR:
     if isinstance(no, Condicional):
         return InstrucaoIR("condicional", (
             expressao_para_ir(no.condicao),
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.caminho_verdadeiro)),
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.caminho_falso)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.caminho_verdadeiro)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.caminho_falso)),
         ))
     if isinstance(no, Enquanto):
         return InstrucaoIR("enquanto", (
             expressao_para_ir(no.condicao),
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.corpo)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.corpo)),
         ))
     if isinstance(no, ParaCada):
         return InstrucaoIR("para_cada", (
             no.nome, expressao_para_ir(no.iteravel),
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.corpo)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.corpo)),
         ))
     if isinstance(no, FuncaoDeclaracao):
         return InstrucaoIR("declarar_funcao", (
             no.nome, tuple(no.parametros),
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.corpo)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.corpo)),
         ))
     if isinstance(no, Retornar):
         return InstrucaoIR("retornar", (
@@ -123,10 +125,10 @@ def instrucao_para_ir(no: object) -> InstrucaoIR:
         ))
     if isinstance(no, Tentar):
         return InstrucaoIR("tentar", (
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.corpo)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.corpo)),
             no.nome_erro,
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.captura)),
-            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.finalmente)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.captura)),
+            ProgramaIR(tuple(_instrucao_com_posicao(i) for i in no.finalmente)),
         ))
     if isinstance(no, Lancar):
         return InstrucaoIR("lancar", (expressao_para_ir(no.valor),))
@@ -137,8 +139,15 @@ def instrucao_para_ir(no: object) -> InstrucaoIR:
     raise ErroSemantico(f"instrução não suportada pela representação intermediária: {type(no).__name__}")
 
 
+def _instrucao_com_posicao(no: object) -> InstrucaoIR:
+    instrucao = instrucao_para_ir(no)
+    return InstrucaoIR(
+        instrucao.operacao, instrucao.argumentos, getattr(no, "posicao", None)
+    )
+
+
 def programa_para_ir(programa: Programa) -> ProgramaIR:
-    return ProgramaIR(tuple(instrucao_para_ir(i) for i in programa.declaracoes))
+    return ProgramaIR(tuple(_instrucao_com_posicao(i) for i in programa.declaracoes))
 
 
 def expressao_ir_para_no(expressao: ExpressaoIR) -> object:
@@ -163,7 +172,7 @@ def expressao_ir_para_no(expressao: ExpressaoIR) -> object:
     raise ErroSemantico(f"operação de expressão desconhecida na IR: {op}")
 
 
-def instrucao_ir_para_no(instrucao: InstrucaoIR) -> object:
+def _instrucao_ir_para_no_sem_posicao(instrucao: InstrucaoIR) -> object:
     op, args = instrucao.operacao, instrucao.argumentos
     if op == "exibir":
         return Mostrar([expressao_ir_para_no(v) for v in args[0]])
@@ -217,6 +226,13 @@ def instrucao_ir_para_no(instrucao: InstrucaoIR) -> object:
     if op == "continuar":
         return Continuar()
     raise ErroSemantico(f"operação de instrução desconhecida na IR: {op}")
+
+
+def instrucao_ir_para_no(instrucao: InstrucaoIR) -> object:
+    no = _instrucao_ir_para_no_sem_posicao(instrucao)
+    if hasattr(no, "posicao"):
+        no.posicao = instrucao.posicao
+    return no
 
 
 def programa_ir_para_ast(programa: ProgramaIR) -> Programa:

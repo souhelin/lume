@@ -20,10 +20,15 @@ class TestesCLI(unittest.TestCase):
             check=False,
         )
 
+    def arquivo_temporario(self, diretorio: str, nome: str, fonte: str) -> Path:
+        caminho = Path(diretorio, nome)
+        caminho.write_text(fonte, encoding="utf-8")
+        return caminho
+
     def test_versao(self) -> None:
         resultado = self.executar_cli("--versao")
         self.assertEqual(resultado.returncode, 0)
-        self.assertIn("0.1.0", resultado.stdout)
+        self.assertIn("0.3.0", resultado.stdout)
 
     def test_verificar_arquivo(self) -> None:
         resultado = self.executar_cli("--verificar", "exemplos/ola.lume")
@@ -41,29 +46,28 @@ class TestesCLI(unittest.TestCase):
         self.assertIn("não encontrado", resultado.stderr)
 
     def test_executar_instrucao_semantica_em_portugues(self) -> None:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".lume") as arquivo:
-            arquivo.write(
-                "crie uma variável chamada idade com valor 18\n"
-                "mostre idade\n"
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(
+                diretorio, "principal.lume",
+                "crie uma variável chamada idade com valor 18\nmostre idade\n",
             )
-            arquivo.flush()
-            resultado = self.executar_cli(arquivo.name)
+            resultado = self.executar_cli(str(arquivo))
         self.assertEqual(resultado.returncode, 0, resultado.stderr)
         self.assertEqual(resultado.stdout.strip(), "18")
 
     def test_verificar_semantica_sem_executar(self) -> None:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".lume") as arquivo:
-            arquivo.write('mostre "válido"\n')
-            arquivo.flush()
-            resultado = self.executar_cli("--semantico", "--verificar", arquivo.name)
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(diretorio, "principal.lume", 'mostre "válido"\n')
+            resultado = self.executar_cli("--semantico", "--verificar", str(arquivo))
         self.assertEqual(resultado.returncode, 0, resultado.stderr)
         self.assertIn("Semântica válida", resultado.stdout)
 
     def test_modo_semantico_rejeita_referencia_inexistente(self) -> None:
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".lume") as arquivo:
-            arquivo.write("mostre nome_que_nao_existe\n")
-            arquivo.flush()
-            resultado = self.executar_cli("--semantico", "--verificar", arquivo.name)
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(
+                diretorio, "principal.lume", "mostre nome_que_nao_existe\n"
+            )
+            resultado = self.executar_cli("--semantico", "--verificar", str(arquivo))
         self.assertEqual(resultado.returncode, 1)
         self.assertIn("não definido", resultado.stderr)
 
@@ -80,6 +84,37 @@ class TestesCLI(unittest.TestCase):
             resultado = self.executar_cli(str(principal))
         self.assertEqual(resultado.returncode, 0, resultado.stderr)
         self.assertEqual(resultado.stdout.strip(), "módulo")
+
+    def test_cli_mostra_posicao_de_erro_de_execucao(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(
+                diretorio, "principal.lume", 'mostrar "ok"\nmostrar 10 / 0\n'
+            )
+            resultado = self.executar_cli(str(arquivo))
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn(":2:1: Erro de execução:", resultado.stderr)
+        self.assertIn("^", resultado.stderr)
+
+    def test_cli_formata_arquivo_sem_gravar(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(
+                diretorio, "principal.lume", 'se verdadeiro então\nmostrar "sim"\nfim\n'
+            )
+            resultado = self.executar_cli("--formatar", str(arquivo))
+            original = arquivo.read_text(encoding="utf-8")
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+        self.assertIn('    mostrar "sim"', resultado.stdout)
+        self.assertNotIn('    mostrar "sim"', original)
+
+    def test_cli_formata_e_grava_arquivo(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(
+                diretorio, "principal.lume", 'se verdadeiro então\nmostrar "sim"\nfim\n'
+            )
+            resultado = self.executar_cli("--formatar", "--gravar", str(arquivo))
+            gravado = arquivo.read_text(encoding="utf-8")
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+        self.assertIn('    mostrar "sim"', gravado)
 
 
 if __name__ == "__main__":
