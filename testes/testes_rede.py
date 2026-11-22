@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.error import URLError
 
 from lume.erros import ErroExecucao
@@ -16,6 +16,13 @@ class TestesPermissoesRede(unittest.TestCase):
         permissoes = PermissoesRede()
         with self.assertRaisesRegex(ErroExecucao, "bloqueado"):
             permissoes.autorizar_url("https://exemplo.com/dados")
+
+    def test_notifica_solicitacao_antes_de_aplicar_permissao(self):
+        aviso = Mock()
+        permissoes = PermissoesRede()
+        with self.assertRaises(ErroExecucao):
+            permissoes.autorizar_url("https://api.exemplo.com", ao_solicitar=aviso)
+        aviso.assert_called_once_with("api.exemplo.com")
 
     def test_autorizacao_exata_de_host(self):
         permissoes = PermissoesRede(["exemplo.com"])
