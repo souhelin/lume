@@ -52,11 +52,11 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
     def test_openwordnet_preserva_multiplos_synsets_para_mesma_palavra(self):
         arquivo = self.root / "wn-data-por.tab"
         arquivo.write_text(
-            "# OpenWN-PT\\tpor\\turl\n"
-            "00000001-n\\tlemma\\tbanco\n"
-            "00000001-n\\tlemma\\tinstituição financeira\n"
-            "00000002-n\\tlemma\\tbanco\n"
-            "00000002-n\\tlemma\\tassento\n",
+            "# OpenWN-PT\tpor\turl\n"
+            "00000001-n\tlemma\tbanco\n"
+            "00000001-n\tlemma\tinstituição financeira\n"
+            "00000002-n\tlemma\tbanco\n"
+            "00000002-n\tlemma\tassento\n",
             encoding="utf-8",
         )
         resultado = importar_openwordnet_tsv(
