@@ -180,6 +180,19 @@ Use "lume --semantico programa.lume" para forçar esse front-end ou "lume --trad
 | inverter(colecao) | Devolve uma cópia invertida de uma lista ou texto. |
 | juntar(lista, separador) | Une uma lista de textos usando um separador. |
 
+## LUME Lexicon (fundação em desenvolvimento)
+
+A branch de desenvolvimento `feat/lume-lexicon-foundation` adiciona uma API SQLite local para lemas, flexões, relações, contextos e procedência. O interpretador aceita uma instância compartilhada por injeção (`Interpretador(lexicon=...)`) e consulta por `consultar_lexico(...)`. Sem uma instância fornecida, a consulta devolve uma coleção vazia; nenhum banco é baixado ou criado implicitamente.
+
+Esta etapa ainda não inclui os grandes conjuntos de dados externos nem desambiguação contextual geral. A auditoria identificou questões de procedência no léxico agregado de fserb/pt-br e dependências históricas do OpenWordNet-PT. Os dados só serão empacotados após a licença de cada subconjunto ser confirmada.
+
+Documentação:
+- [LEXICON.md](LEXICON.md)
+- [DATA_SOURCES.md](DATA_SOURCES.md)
+- [LICENSES.md](LICENSES.md)
+- [SEMANTICS.md](SEMANTICS.md)
+- [UPDATE_SYSTEM.md](UPDATE_SYSTEM.md)
+
 ## Verificações
 
 Execute a suíte de testes com a biblioteca padrão do Python:
