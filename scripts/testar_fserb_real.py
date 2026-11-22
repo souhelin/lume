@@ -32,7 +32,7 @@ def main() -> int:
                     f"{resultado.registros_importados} < {minimo}"
                 )
         stats = lexicon.estatisticas()
-        if stats["frequencias"] < 300_000 or lexicon.frequencia("de") == ():
+        if stats["frequencias"] < 300_000 or lexicon.frequencia("a") == ():
             raise SystemExit("pontuações ICF não foram carregadas corretamente")
         if not lexicon.buscar("cantar"):
             raise SystemExit("lema de verbo não encontrado")
