@@ -473,13 +473,17 @@ def importar_openwordnet_ttl(
             for origem_id in origem:
                 for destino_id in destino:
                     if origem_id and destino_id and origem_id != destino_id:
-                        relacoes_lote.append((origem_id, destino_id, tipo, fonte))
+                        relacoes_lote.append((
+                            origem_id, destino_id, tipo, fonte,
+                            fonte_meta["licenca"], fonte_meta["versao"],
+                        ))
             if len(relacoes_lote) >= 5000:
                 with lexicon._lock, lexicon._db:
                     lexicon._db.executemany(
                         """
-                        INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
-                        VALUES (?, ?, ?, ?)
+                        INSERT OR IGNORE INTO relacoes
+                            (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
+                        VALUES (?, ?, ?, ?, ?, ?)
                         """,
                         relacoes_lote,
                     )
