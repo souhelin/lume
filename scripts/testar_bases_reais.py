@@ -11,13 +11,18 @@ def main() -> int:
     p.add_argument("synsets", type=Path)
     p.add_argument("palavras_sentido", type=Path)
     p.add_argument("relacoes", type=Path)
+    p.add_argument("--morfosemantico", type=Path)
+    p.add_argument("--same-as", type=Path)
     p.add_argument("--min-entradas", type=int, default=5_000)
     p.add_argument("--min-sentidos", type=int, default=5_000)
     a = p.parse_args()
     with Lexicon(":memory:") as lexicon:
         resultado = importar_openwordnet_ttl(
             lexicon, a.palavras, a.synsets, a.palavras_sentido, a.relacoes,
-            versao="own-pt:264016d5899e6969f6f7cb4f1d75fa06037c1fd7", confirmar_direitos=True,
+            versao="own-pt:264016d5899e6969f6f7cb4f1d75fa06037c1fd7",
+            arquivo_morfosemantico=a.morfosemantico,
+            arquivo_same_as=a.same_as,
+            confirmar_direitos=True,
         )
         stats = lexicon.estatisticas()
         if resultado.registros_importados < a.min_entradas:
