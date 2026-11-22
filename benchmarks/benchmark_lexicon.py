@@ -29,7 +29,7 @@ def main() -> int:
             root = Path(temporario.name)
             palavras = root / "fixture"
             palavras.write_text(
-                "".join(f"palavra_{i:05d}\\n" for i in range(20_000)),
+                "".join(f"palavra_{i:05d}\n" for i in range(20_000)),
                 encoding="utf-8",
             )
             banco_path = root / "benchmark.sqlite3"
