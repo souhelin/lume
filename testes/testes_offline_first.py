@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import tempfile
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -11,6 +13,11 @@ from lume.erros import ErroExecucao
 
 
 class TestesOfflineFirst(unittest.TestCase):
+    def test_importacao_e_inicio_nao_carregam_cliente_de_rede(self):
+        codigo = "import sys; import lume; lume.Interpretador(); assert \"lume.rede\" not in sys.modules"
+        resultado = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True)
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+
     def test_programa_tradicional_executa_sem_rede(self):
         saida = []
         interpretador = Interpretador(saida=saida.append)
