@@ -39,6 +39,17 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [x] Formatador de recuo e diagnósticos de linha/coluna na CLI.
 - [x] Guia de início rápido com instalação, exemplos de variáveis, controle de fluxo, funções, listas, módulos, arquivos e execução.
 
+## 0.4.0 — Offline-First e conectividade opcional
+
+- [x] Núcleo tradicional e semântico sem dependência de Internet ou serviços externos.
+- [x] Permissões de rede negadas por padrão e allowlist explícita por host.
+- [x] Cliente HTTP(S) opcional, carregado sob demanda, sem dependência externa obrigatória.
+- [x] Requisições GET/POST e downloads limitados, com timeout, TLS padrão e redirecionamentos desativados.
+- [x] Funções de rede integradas à biblioteca padrão sem conexão automática.
+- [x] Documentação da arquitetura, permissões, CLI, API e limites de segurança.
+- [x] Testes de regressão offline e de negação de rede por padrão.
+- [ ] Executar e aprovar a matriz CI multiplataforma após a integração.
+
 ## 1.0.0 — Estabilidade
 
 - [ ] Gramática estável e especificação normativa.
