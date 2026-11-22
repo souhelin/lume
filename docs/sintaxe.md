@@ -1,0 +1,92 @@
+# Sintaxe da Lume — versão 0.1.0
+
+Este documento define a sintaxe aceita pelo interpretador inicial. A linguagem é sensível a quebras de linha para separar instruções, mas não a maiúsculas/minúsculas em identificadores e palavras-chave. Identificadores são normalizados em Unicode NFC.
+
+## Regras gerais
+
+- Cada instrução ocupa uma linha.
+- Espaços e tabulações antes das instruções são ignorados; a indentação é visual e não define blocos.
+- `#` inicia um comentário até o fim da linha.
+- Textos usam aspas simples ou duplas. Escapes aceitos: `\\`, `\"`, `\'`, `\n`, `\t` e `\r`.
+- Blocos são encerrados com `fim`.
+- O idioma das palavras-chave é português brasileiro.
+
+## Instruções
+
+```text
+mostrar expressão
+exibir expressão
+
+definir nome como expressão
+definir nome = expressão
+
+se condição então
+    instruções
+senão
+    instruções
+fim
+
+enquanto condição faça
+    instruções
+fim
+
+para cada item em coleção faça
+    instruções
+fim
+
+função nome(parâmetro1, parâmetro2) faça
+    instruções
+    retornar expressão
+fim
+
+interromper
+continuar
+```
+
+`senão se` também é aceito entre o bloco `se` e o bloco `senão` final. `retornar` sem valor devolve `nulo`.
+
+`interromper` encerra o laço mais próximo e `continuar` inicia sua próxima iteração. Ambos só podem ser usados dentro de um laço.
+
+## Valores
+
+| Tipo | Exemplos |
+|---|---|
+| Inteiro | `0`, `42`, `-7` |
+| Decimal | `3.14`, `0.5` |
+| Texto | `"Olá"`, `'Lume'` |
+| Lógico | `verdadeiro`, `falso` |
+| Nulo | `nulo` |
+| Lista | `[1, 2, 3]`, `["azul", "verde"]` |
+
+## Operadores
+
+| Grupo | Operadores |
+|---|---|
+| Lógicos | `ou`, `e`, `não` |
+| Comparação | `==`, `!=`, `<`, `<=`, `>`, `>=`, `igual a`, `diferente de`, `menor que`, `maior que`, `menor ou igual a`, `maior ou igual a` |
+| Aritméticos | `+`, `-`, `*`, `/`, `//`, `%`, `**` |
+| Agrupamento | `(expressão)` |
+
+Precedência, da maior para a menor: agrupamento e chamadas, potência, multiplicação/divisão, soma/subtração, comparação, `e`, `ou`. A potência é associativa à direita. Os operadores `e` e `ou` usam avaliação de curto-circuito.
+
+`+` aceita dois números, dois textos ou duas listas. Comparações ordenadas aceitam dois números ou dois textos do mesmo tipo.
+
+## Identificadores
+
+Identificadores começam com letra Unicode ou `_` e podem continuar com letras, números ou `_`. Acentos são aceitos. Palavras-chave e nomes de variáveis não diferenciam maiúsculas de minúsculas; por isso, `Nome` e `nome` identificam a mesma variável.
+
+## Entrada, saída e funções nativas
+
+A saída é feita por `mostrar` ou `exibir`. É possível informar vários valores separados por vírgula:
+
+```text
+mostrar "Resultado:", 2 + 2
+```
+
+A entrada usa `perguntar("Mensagem: ")`, que devolve um texto.
+
+A lista atual de funções nativas está no README. Chamadas usam parênteses e argumentos separados por vírgula.
+
+## Limites da versão inicial
+
+A versão 0.1.0 não possui mapas/dicionários, acesso por índice, propriedades, classes, importação de módulos, manipulação de arquivos, exceções escritas pelo usuário, tipagem estática, interpolação de textos ou sintaxe de bloco em uma única linha. Esses recursos não devem ser presumidos como disponíveis.

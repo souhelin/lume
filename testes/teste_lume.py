@@ -1,0 +1,140 @@
+from __future__ import annotations
+
+import unittest
+
+from lume.erros import ErroExecucao, ErroLexico, ErroSintatico
+from lume.interpretador import Interpretador
+from lume.lexer import analisar_lexico
+from lume.parser import analisar_sintaxe
+
+
+class TestesLume(unittest.TestCase):
+    def executar(self, fonte: str, entradas: list[str] | None = None) -> list[str]:
+        saidas: list[str] = []
+        fila = iter(entradas or [])
+        interpretador = Interpretador(saida=saidas.append, entrada=lambda _mensagem: next(fila))
+        interpretador.executar(analisar_sintaxe(fonte))
+        return saidas
+
+    def test_ola_mundo(self) -> None:
+        self.assertEqual(self.executar('mostrar "Olá, mundo!"'), ["Olá, mundo!"])
+
+    def test_alias_exibir(self) -> None:
+        self.assertEqual(self.executar('exibir "Olá"'), ["Olá"])
+
+    def test_identificadores_com_acentos_e_sem_distincao_de_caixa(self) -> None:
+        self.assertEqual(self.executar('DEFINIR ação como "feito"\nmostrar AÇÃO'), ["feito"])
+
+    def test_variaveis_e_operacoes(self) -> None:
+        fonte = "definir resultado como (2 + 3) * 4\nmostrar resultado"
+        self.assertEqual(self.executar(fonte), ["20"])
+
+    def test_precedencia_e_potencia(self) -> None:
+        self.assertEqual(self.executar("mostrar 2 + 3 * 4\nmostrar 2 ** 3 ** 2"), ["14", "512"])
+
+    def test_precedencia_de_negacao_e_sinal(self) -> None:
+        self.assertEqual(self.executar("mostrar -2 ** 2\nmostrar não 2 maior que 1"), ["-4", "falso"])
+
+    def test_comparacao_em_portugues(self) -> None:
+        self.assertEqual(self.executar("mostrar 5 maior que 3\nmostrar 5 menor ou igual a 5"), ["verdadeiro", "verdadeiro"])
+
+    def test_comparacao_entre_inteiro_e_decimal(self) -> None:
+        self.assertEqual(self.executar("mostrar 2 < 2.5\nmostrar 3.0 == 3"), ["verdadeiro", "verdadeiro"])
+
+    def test_condicional_e_senao(self) -> None:
+        fonte = 'definir valor como 4\nse valor maior que 3 então\n mostrar "sim"\nsenão\n mostrar "não"\nfim'
+        self.assertEqual(self.executar(fonte), ["sim"])
+
+    def test_condicional_senao_se(self) -> None:
+        fonte = 'definir valor como 2\nse valor igual a 1 então\n mostrar "um"\nsenão se valor igual a 2 então\n mostrar "dois"\nsenão\n mostrar "outro"\nfim'
+        self.assertEqual(self.executar(fonte), ["dois"])
+
+    def test_enquanto(self) -> None:
+        fonte = "definir contador como 0\nenquanto contador menor que 3 faça\n definir contador como contador + 1\nfim\nmostrar contador"
+        self.assertEqual(self.executar(fonte), ["3"])
+
+    def test_para_cada_e_intervalo_inclusivo(self) -> None:
+        fonte = "definir total como 0\npara cada numero em intervalo(1, 4) faça\n definir total como total + numero\nfim\nmostrar total"
+        self.assertEqual(self.executar(fonte), ["10"])
+
+    def test_funcao_com_retorno(self) -> None:
+        fonte = "função dobro(numero) faça\n retornar numero * 2\nfim\nmostrar dobro(8)"
+        self.assertEqual(self.executar(fonte), ["16"])
+
+    def test_funcao_recursiva(self) -> None:
+        fonte = "função fatorial(n) faça\n se n menor ou igual a 1 então\n  retornar 1\n fim\n retornar n * fatorial(n - 1)\nfim\nmostrar fatorial(5)"
+        self.assertEqual(self.executar(fonte), ["120"])
+
+    def test_listas(self) -> None:
+        fonte = 'definir itens como ["a", "b"]\nmostrar itens\nmostrar comprimento(itens)'
+        self.assertEqual(self.executar(fonte), ["[a, b]", "2"])
+
+    def test_operadores_logicos_com_curto_circuito(self) -> None:
+        self.assertEqual(self.executar("mostrar falso e (1 / 0 maior que 2)\nmostrar verdadeiro ou falso"), ["falso", "verdadeiro"])
+
+    def test_entrada_de_dados(self) -> None:
+        self.assertEqual(self.executar('definir nome como perguntar("Nome: ")\nmostrar "Olá", nome', ["Lia"]), ["Olá Lia"])
+
+    def test_biblioteca_de_tipos(self) -> None:
+        self.assertEqual(self.executar('mostrar tipo(10)\nmostrar numero("2,5")\nmostrar maiusculas("lume")'), ["inteiro", "2.5", "LUME"])
+
+    def test_divisao_por_zero(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "dividir por zero"):
+            self.executar("mostrar 10 / 0")
+
+    def test_nome_nao_definido(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "não definido"):
+            self.executar("mostrar desconhecido")
+
+    def test_quantidade_de_argumentos(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "espera 1 argumento"):
+            self.executar("mostrar comprimento()")
+
+    def test_limite_de_execucao(self) -> None:
+        interpretador = Interpretador(saida=lambda _texto: None, limite_passos=20)
+        with self.assertRaisesRegex(ErroExecucao, "limite"):
+            interpretador.executar(analisar_sintaxe("enquanto verdadeiro faça\n mostrar 1\nfim"))
+
+    def test_interromper(self) -> None:
+        fonte = "definir n como 0\nenquanto verdadeiro faça\n definir n como n + 1\n interromper\nfim\nmostrar n"
+        self.assertEqual(self.executar(fonte), ["1"])
+
+    def test_continuar(self) -> None:
+        fonte = "definir total como 0\npara cada n em intervalo(1, 4) faça\n se n igual a 2 então\n  continuar\n fim\n definir total como total + n\nfim\nmostrar total"
+        self.assertEqual(self.executar(fonte), ["8"])
+
+    def test_controle_de_laco_nao_escapa_de_funcao(self) -> None:
+        fonte = "função parar() faça\n interromper\nfim\nenquanto verdadeiro faça\n parar()\nfim"
+        with self.assertRaisesRegex(ErroExecucao, "só pode ser usado dentro de um laço"):
+            self.executar(fonte)
+
+    def test_variavel_local_nao_altera_fechamento(self) -> None:
+        fonte = 'definir nome como "global"\nfunção trocar() faça\n definir nome como "local"\n mostrar nome\nfim\ntrocar()\nmostrar nome'
+        self.assertEqual(self.executar(fonte), ["local", "global"])
+
+    def test_numero_nao_finito_e_rejeitado(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "finito"):
+            self.executar('mostrar numero("NaN")')
+
+    def test_caractere_invalido(self) -> None:
+        with self.assertRaises(ErroLexico):
+            analisar_lexico("mostrar @")
+
+    def test_texto_sem_fechamento(self) -> None:
+        with self.assertRaises(ErroLexico):
+            analisar_lexico('mostrar "aberto')
+
+    def test_bloco_sem_fim(self) -> None:
+        with self.assertRaises(ErroSintatico):
+            analisar_sintaxe("se verdadeiro então\n mostrar 1\n")
+
+    def test_retornar_fora_de_funcao(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "só pode ser usado"):
+            self.executar("retornar 1")
+
+    def test_virgulas_no_mostrar(self) -> None:
+        self.assertEqual(self.executar('mostrar "a", 2, verdadeiro'), ["a 2 verdadeiro"])
+
+
+if __name__ == "__main__":
+    unittest.main()

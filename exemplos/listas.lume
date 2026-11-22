@@ -1,0 +1,6 @@
+definir frutas como ["maçã", "banana", "laranja"]
+mostrar "Quantidade de frutas:", comprimento(frutas)
+
+para cada fruta em frutas faça
+    mostrar "Fruta:", fruta
+fim

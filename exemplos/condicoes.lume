@@ -1,0 +1,7 @@
+definir idade como 16
+
+se idade maior ou igual a 18 então
+    mostrar "Maior de idade"
+senão
+    mostrar "Menor de idade"
+fim
