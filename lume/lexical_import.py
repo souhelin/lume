@@ -528,7 +528,7 @@ def importar_fserb_icf(
     versao: str, confirmar_direitos: bool = False,
     limite: int | None = None,
 ) -> ResultadoImportacao:
-    """Importa pares palavra,pontuação ICF sem confundi-los com definições."""
+    """Importa pares palavra,pontuação ICF em lotes, sem guardá-los na RAM."""
     import math
 
     fonte = "fserb-pt-br-icf"
@@ -539,43 +539,59 @@ def importar_fserb_icf(
         atribuicao="Copyright 2021 Fernando Serboncini; preservar LICENSE upstream.",
         confirmar_direitos=confirmar_direitos,
     )
-    lote: dict[str, tuple[str, float]] = {}
-    lidos = ignorados = 0
-    with Path(arquivo_icf).open("r", encoding="utf-8-sig", newline="") as arquivo:
-        for linha in arquivo:
-            valor = linha.strip()
-            if not valor:
-                continue
-            lidos += 1
-            try:
-                palavra, pontuacao_texto = valor.rsplit(",", 1)
-                pontuacao = float(pontuacao_texto)
-                if not palavra.strip() or not math.isfinite(pontuacao) or pontuacao < 0:
-                    raise ValueError
-            except ValueError:
-                ignorados += 1
-                continue
-            lote[normalizar_forma(palavra)] = (palavra, pontuacao)
-            if limite is not None and lidos >= limite:
-                break
+    lidos = importados = ignorados = 0
+    lote: list[tuple[str, str, float, str, str]] = []
     with lexicon._lock, lexicon._db:
         fonte_meta = lexicon._db.execute(
             "SELECT verificada, versao FROM fontes WHERE id=?", (fonte,)
         ).fetchone()
         if fonte_meta is None or not fonte_meta["verificada"]:
             raise PermissionError("fonte ICF não verificada para importação")
-        lexicon._db.executemany(
-            """
-            INSERT INTO frequencias
-                (forma_normalizada, forma_original, valor, fonte_id, versao_fonte)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(forma_normalizada, fonte_id) DO UPDATE SET
-                forma_original=excluded.forma_original, valor=excluded.valor,
-                versao_fonte=excluded.versao_fonte
-            """,
-            (
-                (normalizado, palavra, pontuacao, fonte, fonte_meta["versao"])
-                for normalizado, (palavra, pontuacao) in lote.items()
-            ),
-        )
-    return ResultadoImportacao(fonte, lidos, len(lote), ignorados=ignorados)
+        with Path(arquivo_icf).open("r", encoding="utf-8-sig", newline="") as arquivo:
+            for linha in arquivo:
+                valor = linha.strip()
+                if not valor:
+                    continue
+                lidos += 1
+                try:
+                    palavra, pontuacao_texto = valor.rsplit(",", 1)
+                    pontuacao = float(pontuacao_texto)
+                    if not palavra.strip() or not math.isfinite(pontuacao) or pontuacao < 0:
+                        raise ValueError
+                except ValueError:
+                    ignorados += 1
+                    continue
+                lote.append((
+                    normalizar_forma(palavra), palavra, pontuacao,
+                    fonte, fonte_meta["versao"],
+                ))
+                if len(lote) >= 5000:
+                    lexicon._db.executemany(
+                        """
+                        INSERT INTO frequencias
+                            (forma_normalizada, forma_original, valor, fonte_id, versao_fonte)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(forma_normalizada, fonte_id) DO UPDATE SET
+                            forma_original=excluded.forma_original, valor=excluded.valor,
+                            versao_fonte=excluded.versao_fonte
+                        """,
+                        lote,
+                    )
+                    importados += len(lote)
+                    lote.clear()
+                if limite is not None and lidos >= limite:
+                    break
+        if lote:
+            lexicon._db.executemany(
+                """
+                INSERT INTO frequencias
+                    (forma_normalizada, forma_original, valor, fonte_id, versao_fonte)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(forma_normalizada, fonte_id) DO UPDATE SET
+                    forma_original=excluded.forma_original, valor=excluded.valor,
+                    versao_fonte=excluded.versao_fonte
+                """,
+                lote,
+            )
+            importados += len(lote)
+    return ResultadoImportacao(fonte, lidos, importados, ignorados=ignorados)
