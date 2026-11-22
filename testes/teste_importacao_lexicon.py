@@ -241,7 +241,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 }) + "\n"
             ).encode()
             manifesto = {
-                "schema_version": 3, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 4, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             chave = Ed25519PrivateKey.generate()
@@ -276,7 +276,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 "version": "2", "url": "https://example.org", "attribution": "Crédito",
             }
             manifesto = {
-                "schema_version": 3, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 4, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             pacote = self._pacote(root, chave, delta, manifesto, corromper_assinatura=True)
