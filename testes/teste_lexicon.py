@@ -103,12 +103,7 @@ class TestesLexicon(unittest.TestCase):
         try:
             banco.adicionar_entrada(self.entrada("feliz", "feliz", definicao="Estado de alegria."))
             banco.adicionar_entrada(self.entrada("contente", "contente"))
-            # O destino precisa existir para preservar integridade referencial.
-            with banco._lock, banco._db:
-                banco._db.execute(
-                    "INSERT INTO relacoes(origem_id, destino_id, tipo, fonte_id) VALUES (?, ?, ?, ?)",
-                    ("feliz", "contente", "sinonimo", "teste"),
-                )
+            banco.adicionar_relacao("feliz", "contente", "sinonimo", "teste")
             self.assertEqual(banco.relacoes("feliz", "sinonimo")[0].lema, "contente")
         finally:
             banco.fechar()
