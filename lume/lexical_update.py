@@ -52,7 +52,10 @@ def aplicar_pacote_assinado(
         raise ValueError("chave pública Ed25519 precisa ter exatamente 32 bytes")
 
     with zipfile.ZipFile(arquivo_pacote, "r") as pacote_zip:
-        infos = {info.filename: info for info in pacote_zip.infolist()}
+        lista_infos = pacote_zip.infolist()
+        infos = {info.filename: info for info in lista_infos}
+        if len(infos) != len(lista_infos):
+            raise ValueError("pacote contém nomes de arquivos duplicados")
         if set(infos) != {"manifest.json", "manifest.sig", "delta.jsonl"}:
             raise ValueError("pacote contém arquivos ausentes ou inesperados")
         limites = {"manifest.json": 1_000_000, "manifest.sig": 1024, "delta.jsonl": 100_000_000}
