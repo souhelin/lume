@@ -15,7 +15,7 @@ from collections import OrderedDict
 from typing import Iterable
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 CACHE_MAXIMO = 512
 
 
@@ -89,6 +89,11 @@ class Lexicon:
             )
         if versao == SCHEMA_VERSION:
             return
+        if versao == 4:
+            with self._db:
+                self._migrar_procedencia_relacoes()
+                self._db.execute("PRAGMA user_version = 5")
+            return
         if versao == 3:
             with self._db:
                 self._db.executescript(
@@ -105,7 +110,8 @@ class Lexicon:
                         ON frequencias(forma_normalizada);
                     """
                 )
-                self._db.execute("PRAGMA user_version = 4")
+                self._migrar_procedencia_relacoes()
+                self._db.execute("PRAGMA user_version = 5")
             return
         if versao in (1, 2):
             with self._db:
@@ -173,7 +179,8 @@ class Lexicon:
                 self._db.execute(
                     "CREATE INDEX IF NOT EXISTS idx_frequencias_forma ON frequencias(forma_normalizada)"
                 )
-                self._db.execute("PRAGMA user_version = 4")
+                self._migrar_procedencia_relacoes()
+                self._db.execute("PRAGMA user_version = 5")
             return
         with self._db:
             self._db.executescript(
@@ -214,6 +221,8 @@ class Lexicon:
                         ON DELETE CASCADE,
                     tipo TEXT NOT NULL,
                     fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                    licenca TEXT NOT NULL,
+                    versao_fonte TEXT NOT NULL,
                     PRIMARY KEY (origem_id, destino_id, tipo, fonte_id)
                 );
                 CREATE TABLE IF NOT EXISTS contextos (
@@ -221,6 +230,8 @@ class Lexicon:
                         ON DELETE CASCADE,
                     contexto TEXT NOT NULL,
                     fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                    licenca TEXT NOT NULL,
+                    versao_fonte TEXT NOT NULL,
                     PRIMARY KEY (entrada_id, contexto, fonte_id)
                 );
                 CREATE TABLE IF NOT EXISTS frequencias (
@@ -260,6 +271,29 @@ class Lexicon:
                 """
             )
             self._db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+
+    def _migrar_procedencia_relacoes(self) -> None:
+        """Acrescenta versão/licença aos vínculos semânticos já existentes."""
+        for tabela in ("relacoes", "contextos"):
+            colunas = {
+                row["name"] for row in self._db.execute(f"PRAGMA table_info({tabela})")
+            }
+            if "licenca" not in colunas:
+                self._db.execute(
+                    f"ALTER TABLE {tabela} ADD COLUMN licenca TEXT NOT NULL DEFAULT ''"
+                )
+            if "versao_fonte" not in colunas:
+                self._db.execute(
+                    f"ALTER TABLE {tabela} ADD COLUMN versao_fonte TEXT NOT NULL DEFAULT ''"
+                )
+            self._db.execute(
+                f"""
+                UPDATE {tabela}
+                SET licenca=(SELECT licenca FROM fontes WHERE id={tabela}.fonte_id),
+                    versao_fonte=(SELECT versao FROM fontes WHERE id={tabela}.fonte_id)
+                WHERE licenca='' OR versao_fonte=''
+                """
+            )
 
     def fechar(self) -> None:
         with self._lock:
@@ -364,8 +398,15 @@ class Lexicon:
             for contexto in contextos:
                 if contexto.strip():
                     self._db.execute(
-                        "INSERT OR IGNORE INTO contextos VALUES (?, ?, ?)",
-                        (entrada.identificador, contexto.strip(), entrada.fonte),
+                        """
+                        INSERT OR IGNORE INTO contextos
+                            (entrada_id, contexto, fonte_id, licenca, versao_fonte)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (
+                            entrada.identificador, contexto.strip(), entrada.fonte,
+                            entrada.licenca, entrada.versao_fonte,
+                        ),
                     )
             self._limpar_cache()
 
@@ -377,7 +418,7 @@ class Lexicon:
             raise ValueError("o tipo da relação não pode ser vazio")
         with self._lock, self._db:
             fonte = self._db.execute(
-                "SELECT verificada FROM fontes WHERE id=?", (fonte_id,)
+                "SELECT verificada, licenca, versao FROM fontes WHERE id=?", (fonte_id,)
             ).fetchone()
             if fonte is None or not fonte["verificada"]:
                 raise ValueError("a fonte da relação precisa estar verificada")
@@ -389,10 +430,14 @@ class Lexicon:
                 raise ValueError("as duas entradas da relação precisam existir")
             self._db.execute(
                 """
-                INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
-                VALUES (?, ?, ?, ?)
+                INSERT OR IGNORE INTO relacoes
+                    (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (origem_id, destino_id, tipo, fonte_id),
+                (
+                    origem_id, destino_id, tipo, fonte_id,
+                    fonte["licenca"], fonte["versao"],
+                ),
             )
 
     def registrar_sentido(
