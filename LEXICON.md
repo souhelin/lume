@@ -88,7 +88,7 @@ A opção `--confirmar-direitos` é um aceite explícito do operador após revis
 
 `Interpretador` aceita uma instância compartilhada de `Lexicon`. `InterpretadorSemantico` usa essa instância quando disponível e oferece `analisar_lexico(texto)`. A análise retorna candidatos e evidências; não reescreve AST/IR nem executa palavras encontradas no dicionário.
 
-A desambiguação é determinística e conservadora: usa pistas locais de classe gramatical e contextos registrados. Quando a diferença de pontuação não é suficiente, mantém a ambiguidade. Não é um modelo de linguagem nem uma compreensão irrestrita de português.
+A desambiguação é determinística e conservadora: expande cada lema em sentidos/synsets, usa pistas locais de classe gramatical, sobreposição de palavras com a glossa, membros do synset e contextos registrados. Quando a diferença de pontuação não é suficiente, mantém a ambiguidade. Não é um modelo de linguagem nem uma compreensão irrestrita de português.
 
 ## Atualizações
 
