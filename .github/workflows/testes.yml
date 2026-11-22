@@ -33,3 +33,7 @@ jobs:
           lume --versao
           lume --verificar exemplos/ola.lume
           lume exemplos/ola.lume
+      - name: Validar o front-end semântico
+        run: |
+          lume --semantico --verificar exemplos/portugues_natural.lume
+          lume --semantico exemplos/portugues_natural.lume

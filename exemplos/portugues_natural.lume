@@ -1,0 +1,26 @@
+# Exemplo do front-end semântico da Lume
+
+crie uma variável chamada idade com valor 18
+declare uma variável chamada nome com valor "Lume"
+
+mostre nome
+apresente idade
+
+some idade e 2
+
+se idade for maior que 17 então
+    mostre "A idade é válida."
+caso contrário
+    mostre "A idade precisa ser revisada."
+fim
+
+crie uma variável chamada contador com valor 0
+repita 3 vezes
+    atribua contador + 1 a ela
+fim da repetição
+mostre contador
+
+defina uma função chamada dobro com parâmetros numero
+    retorne numero * 2
+fim da função
+mostre dobro(5)

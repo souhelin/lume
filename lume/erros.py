@@ -39,6 +39,14 @@ class ErroExecucao(ErroLume):
     categoria = "Erro de execução"
 
 
+class ErroSemantico(ErroLume):
+    categoria = "Erro semântico"
+
+
+class ErroAmbiguidade(ErroSemantico):
+    categoria = "Ambiguidade semântica"
+
+
 class SinalRetorno(Exception):
     """Controle interno usado para encerrar a execução de uma função."""
 

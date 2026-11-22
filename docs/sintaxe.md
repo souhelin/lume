@@ -18,7 +18,8 @@ mostrar expressão
 exibir expressão
 
 definir nome como expressão
-definir nome = expressão\nnome = expressão
+definir nome = expressão
+nome = expressão
 
 se condição então
     instruções
@@ -90,3 +91,28 @@ A biblioteca padrão inclui `adicionar(lista, valor)`, `inserir(lista, indice, v
 ## Limites da versão inicial
 
 A versão 0.1.0 não possui mapas/dicionários, atribuição por índice, propriedades, classes, importação de módulos, manipulação de arquivos, exceções escritas pelo usuário, tipagem estática, interpolação de textos ou sintaxe de bloco em uma única linha. Esses recursos não devem ser presumidos como disponíveis.
+
+
+## Front-end semântico
+
+Além das instruções estruturadas acima, o front-end semântico reconhece construções naturais documentadas:
+
+~~~text
+crie uma variável chamada idade com valor 18
+declare uma variável idade e atribua a ela o número 18
+mostre idade
+exiba idade
+apresente idade
+atribua 19 à variável idade
+some 2 e 3
+subtraia 5 de 10
+multiplique 3 por 4
+divida 20 por 5
+compare idade maior que 17
+repita 3 vezes
+fim da repetição
+~~~
+
+O front-end também reconhece condições iniciadas por "se ... então", "caso contrário", funções introduzidas por "defina uma função chamada ...", retornos com "retorne" e operações básicas sobre listas. A lista de padrões completos e os exemplos estão em [semantica.md](semantica.md).
+
+Esses padrões não substituem a gramática tradicional nem permitem qualquer frase livre. Uma frase fora dos padrões é rejeitada; relações incompletas ou conflituosas geram diagnósticos semânticos. A forma canônica pode continuar usando a gramática estruturada e ambos os front-ends compartilham o mesmo executor.

@@ -54,7 +54,7 @@ python -m pip install .
 lume exemplos/ola.lume
 ```
 
-Ao executar `lume` sem indicar um arquivo, a linguagem abre um console interativo. Na versão atual, ele aceita instruções completas de uma linha; blocos como `se`, `enquanto` e `função` devem ser escritos em arquivos `.lume`.
+Ao executar `lume` sem indicar um arquivo, a linguagem abre um console interativo. Ele preserva o ambiente entre comandos e aceita blocos de várias linhas encerrados por fim. O front-end semântico também pode ser usado no REPL.
 
 ## Exemplos da linguagem
 
@@ -129,22 +129,54 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 - Limite padrão de 100.000 etapas por execução, até 100.000 itens por coleção e limites para operações numéricas.
 - Mensagens de erro em português e verificação de sintaxe pela CLI.
 
+## Sistema semântico de português
+
+O projeto inclui um front-end semântico determinístico para um conjunto documentado de instruções naturais. Ele reconhece padrões controlados, resolve referências explícitas no contexto, converte as intenções em uma representação intermediária (IR) e valida nomes, chamadas e compatibilidade básica de tipos antes da execução. Não usa IA, internet ou serviços externos.
+
+Exemplo:
+
+~~~text
+crie uma variável chamada idade com valor 18
+mostre idade
+exiba idade
+some idade e 2
+
+se idade for maior que 17 então
+    apresente "Maior de idade"
+caso contrário
+    apresente "Menor de idade"
+fim
+~~~
+
+Também são reconhecidas a declaração equivalente "declare uma variável idade e atribua a ela o número 18", atribuição contextual, operações matemáticas por verbo, comparações explícitas, repetição contada, funções e operações de lista. "mostre", "exiba" e "apresente" são sinônimos semânticos da operação exibir.
+
+A flexibilidade é intencionalmente limitada: frases não previstas não são adivinhadas, e comparações sem operador são rejeitadas como ambíguas. O dicionário pode ser expandido pela API Python, mas um novo termo só se torna executável quando sua regra é implementada e testada.
+
+Use "lume --semantico programa.lume" para forçar esse front-end ou "lume --tradicional programa.lume" para usar a gramática estruturada anterior. A CLI também seleciona automaticamente algumas construções naturais exclusivas. Consulte [docs/semantica.md](docs/semantica.md) para o vocabulário, padrões reconhecidos, API e limites.
+
 ## Funções disponíveis
 
 | Função | Uso |
 |---|---|
-| `comprimento(valor)` | Quantidade de caracteres ou itens de uma lista. |
-| `texto(valor)` | Converte um valor em texto. |
-| `numero(valor)` | Converte para inteiro ou decimal quando possível. Aceita vírgula decimal em textos. |
-| `inteiro(valor)` | Converte para inteiro. |
-| `decimal(valor)` | Converte para decimal. |
-| `tipo(valor)` | Informa o tipo do valor. |
-| `perguntar(mensagem)` | Solicita um texto ao usuário. |
-| `intervalo(inicio, fim, passo)` | Cria uma lista de números inteiros; início e fim são inclusivos. O passo é opcional. |
-| `somar(lista)` | Soma os números de uma lista. |
-| `minimo(lista)` / `maximo(lista)` | Menor ou maior elemento de uma lista não vazia. |
-| `arredondar(numero, casas)` | Arredonda um número; casas é opcional. |
-| `maiusculas(texto)` / `minusculas(texto)` | Altera a caixa de um texto. |\n| `adicionar(lista, valor)` | Adiciona um item ao final e devolve o novo tamanho. |\n| `inserir(lista, indice, valor)` | Insere um item em uma posição. |\n| `remover(lista, indice)` | Remove e devolve o item da posição indicada. |\n| `contem(colecao, valor)` | Verifica se um texto ou lista contém um valor. |\n| `ordenar(lista)` | Devolve uma nova lista ordenada. |\n| `inverter(colecao)` | Devolve uma cópia invertida de uma lista ou texto. |\n| `juntar(lista, separador)` | Une uma lista de textos usando um separador. |
+| comprimento(valor) | Quantidade de caracteres ou itens de uma lista. |
+| texto(valor) | Converte um valor em texto. |
+| numero(valor) | Converte para inteiro ou decimal quando possível. Aceita vírgula decimal em textos. |
+| inteiro(valor) | Converte para inteiro. |
+| decimal(valor) | Converte para decimal. |
+| tipo(valor) | Informa o tipo do valor. |
+| perguntar(mensagem) | Solicita um texto ao usuário. |
+| intervalo(inicio, fim, passo) | Cria uma lista de números inteiros; início e fim são inclusivos. O passo é opcional. |
+| somar(lista) | Soma os números de uma lista. |
+| minimo(lista) / maximo(lista) | Menor ou maior elemento de uma lista não vazia. |
+| arredondar(numero, casas) | Arredonda um número; casas é opcional. |
+| maiusculas(texto) / minusculas(texto) | Altera a caixa de um texto. |
+| adicionar(lista, valor) | Adiciona um item ao final e devolve o novo tamanho. |
+| inserir(lista, indice, valor) | Insere um item em uma posição. |
+| remover(lista, indice) | Remove e devolve o item da posição indicada. |
+| contem(colecao, valor) | Verifica se um texto ou lista contém um valor. |
+| ordenar(lista) | Devolve uma nova lista ordenada. |
+| inverter(colecao) | Devolve uma cópia invertida de uma lista ou texto. |
+| juntar(lista, separador) | Une uma lista de textos usando um separador. |
 
 ## Verificações
 
@@ -172,13 +204,13 @@ Interpretador (interpretador.py)
 Ambiente de execução (ambiente.py)
 ```
 
-A gramática e as decisões de sintaxe estão em [`docs/sintaxe.md`](docs/sintaxe.md). A arquitetura está descrita em [`docs/arquitetura.md`](docs/arquitetura.md), e as etapas planejadas estão em [`docs/roteiro.md`](docs/roteiro.md).
+A gramática estruturada está em [docs/sintaxe.md](docs/sintaxe.md), e o front-end semântico em [docs/semantica.md](docs/semantica.md). A arquitetura está descrita em [`docs/arquitetura.md`](docs/arquitetura.md), e as etapas planejadas estão em [`docs/roteiro.md`](docs/roteiro.md).
 
 ## Segurança e limites atuais
 
 A Lume não expõe comandos para executar código Python, carregar módulos arbitrários ou acessar arquivos do sistema na versão inicial. Isso reduz a superfície de risco, mas não torna a execução de programas desconhecidos automaticamente segura: um programa ainda pode consumir tempo e memória dentro dos limites do interpretador. Não execute código de origem desconhecida em ambientes sensíveis.
 
-A biblioteca padrão, o modelo de módulos, o tratamento de erros recuperáveis e a análise semântica dedicada ainda serão ampliados. O uso de Python 3.10+ é um requisito do interpretador de referência desta fase; isso não impede que uma implementação nativa própria seja criada futuramente.
+A gramática natural ainda é um conjunto de padrões controlados, não compreensão irrestrita do português. O validador semântico faz inferência parcial; operações que dependem de valores disponíveis apenas em execução continuam sendo verificadas pelo interpretador. O uso de Python 3.10+ é um requisito do interpretador de referência desta fase; isso não impede que uma implementação nativa própria seja criada futuramente.
 
 ## Licença
 
