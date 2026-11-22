@@ -53,3 +53,6 @@ Depois de estabilizar a semântica, avaliar bytecode ou uma implementação nati
 
 
 A versão 0.3.0 reúne os recursos marcados como concluídos nesta etapa. A matriz de CI cobre os três sistemas operacionais e quatro versões do Python; a publicação de artefatos e a verificação em ambientes realmente limpos ainda precisam de uma etapa de lançamento.
+
+
+O CI constrói wheels nas 12 combinações de sistema operacional e Python; um job dedicado instala o wheel em um ambiente virtual temporário sem depender do código-fonte do checkout.

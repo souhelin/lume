@@ -265,3 +265,6 @@ Sem --gravar, o resultado vai para a saída padrão e o arquivo original permane
 
 
 A biblioteca padrão está isolada em lume/biblioteca.py, separada do núcleo de avaliação e execução.
+
+
+A integração contínua também constrói o wheel e testa sua instalação em um ambiente virtual temporário, fora da árvore do repositório. Consulte scripts/validar_wheel.py.

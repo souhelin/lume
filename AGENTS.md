@@ -257,3 +257,40 @@ O projeto deve crescer de maneira organizada, sem perder sua simplicidade origin
 **Princípio central:**
 
 "Programar deve ser possível utilizando a própria língua, sem transformar o idioma em uma barreira para a tecnologia."
+
+
+## 16. Estado técnico de referência — versão 0.3.0
+
+A implementação atual é um interpretador Python independente, não um compilador nativo. O front-end semântico aceita um vocabulário e padrões explícitos; não interpreta português irrestrito.
+
+Recursos existentes:
+- Lexer, parser, AST, representação intermediária semântica e validador.
+- Gramática estruturada e front-end semântico em português.
+- Variáveis, listas, condições, repetições, funções e recursão.
+- Atribuição por índice em listas.
+- Tratamento de erros com tente, capture, finalmente e lance.
+- Módulos locais .lume, importações no início do arquivo, cache por instância e detecção de ciclos.
+- Biblioteca padrão modular, incluindo operações de arquivo confinadas à raiz do projeto.
+- CLI, REPL multilinha, verificação estática e formatador de recuo.
+- Diagnósticos de linha e coluna.
+- CI em Linux, macOS e Windows, com Python 3.10 a 3.13.
+
+Limites atuais:
+- Módulos compartilham o ambiente; não há namespaces nem importação seletiva.
+- Arquivos e módulos têm limite de 1 MiB.
+- Coleções têm limite de 100.000 itens e a execução tem limite de 100.000 etapas.
+- O formatador normaliza indentação, não reescreve expressões.
+- A Lume não oferece async/await, classes, rede ou carregamento de módulos Python.
+- A raiz de arquivos não é uma sandbox de segurança contra código hostil.
+
+## 17. Regras específicas para alterações
+
+- Não introduzir uma palavra natural sem entrada de dicionário, regra de tradução, teste e documentação.
+- Não permitir que o tradutor semântico adivinhe a intenção de frases fora dos padrões registrados.
+- Manter AST e IR independentes das palavras usadas pelo front-end.
+- Preservar posições de origem ao criar novos nós e instruções IR.
+- Importações devem ser verificáveis sem executar o módulo e devem continuar restritas ao início do arquivo.
+- Operações de arquivo devem usar a raiz de projeto e limites de tamanho; não remover as verificações de caminho.
+- Não tratar limites de caminho como sandbox de segurança.
+- Atualizar a especificação e a política de compatibilidade antes de declarar a gramática 1.0 estável.
+- A versão 1.0 só pode ser marcada como concluída após critérios do roteiro, testes em matriz e validação de instalação limpa.

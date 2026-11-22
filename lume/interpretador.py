@@ -132,7 +132,8 @@ class Interpretador:
         if arquivo in self._modulos_em_carga:
             raise ErroExecucao(f"ciclo de importação detectado no módulo '{caminho}'")
         try:
-            dados = arquivo.read_bytes()
+            with arquivo.open("rb") as origem:
+                dados = origem.read(1_048_577)
         except FileNotFoundError as erro:
             raise ErroExecucao(f"módulo não encontrado: '{caminho}'") from erro
         except OSError as erro:
@@ -162,7 +163,8 @@ class Interpretador:
     def _ler_arquivo(self, caminho: object) -> str:
         arquivo = self._resolver_caminho(caminho)
         try:
-            dados = arquivo.read_bytes()
+            with arquivo.open("rb") as origem:
+                dados = origem.read(1_048_577)
         except OSError as erro:
             raise ErroExecucao(f"não foi possível ler o arquivo: {erro}") from erro
         if len(dados) > 1_048_576:

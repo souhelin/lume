@@ -79,3 +79,6 @@ O parser associa a posição inicial de cada instrução à AST. A conversão pa
 ## Biblioteca padrão
 
 As funções nativas ficam registradas em biblioteca.py e recebem explicitamente a instância do interpretador. O interpretador mantém a avaliação de expressões e o controle de execução; o módulo da biblioteca concentra conversões, coleções, textos, entrada/saída e operações de arquivos. Essa separação evita acoplar a implementação das funções nativas ao parser ou à gramática.
+
+
+O modo --verificar usa o mesmo contexto semântico nos front-ends tradicional e natural. Importações iniciais são resolvidas recursivamente em modo de análise, sem executar os módulos; seus símbolos são adicionados ao contexto antes de validar o corpo do programa.

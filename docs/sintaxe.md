@@ -174,3 +174,6 @@ Os caminhos são relativos ao diretório raiz do projeto, não podem escapar del
 ## Formatação automática
 
 O comando lume --formatar arquivo.lume valida a fonte e normaliza o recuo de blocos para quatro espaços. lume --formatar --gravar arquivo.lume grava o resultado no arquivo original; sem --gravar, imprime o resultado sem modificar a fonte. O formatador preserva o conteúdo dos textos e não reescreve expressões.
+
+
+Importações devem ficar no início do arquivo, antes de declarações, expressões ou blocos. A validação estática carrega recursivamente os módulos, verifica ciclos e disponibiliza seus nomes para validar o restante do programa. Importações dentro de blocos não são permitidas.

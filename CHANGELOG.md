@@ -48,3 +48,7 @@
 
 - Biblioteca padrão extraída para módulo dedicado, sem alterar as assinaturas das funções nativas.
 - Testes de REPL para blocos multilinha, erros léxicos e tratamento semântico.
+
+
+- Adicionado MANIFEST.in para incluir documentação e exemplos em distribuições fonte.
+- Adicionado teste de instalação isolada do wheel na CI.
