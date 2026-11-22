@@ -10,7 +10,7 @@ A fonte precisa ser registrada por conjunto e versão. O código MIT do LUME nã
 - Os arquivos `lexico` e `conjugações` são listas simples, uma palavra por linha.
 - O README informa que o léxico agregado foi reunido de múltiplas fontes dicionarísticas.
 
-**Importação:** há importadores para `lexico` e `conjugações`. O primeiro preserva as palavras como classe `não_classificada`; o segundo armazena as formas como `forma_verbal_sem_lema`, pois o arquivo não fornece uma relação explícita forma→infinitivo. O arquivo ICF ainda não é importado.
+**Importação:** há importadores para `lexico`, `conjugações`, `listas/verbos` e `icf`. O léxico preserva as palavras como classe `não_classificada`; as conjugações são armazenadas como `forma_verbal_sem_lema`, pois o arquivo não fornece uma relação explícita forma→infinitivo; a lista de verbos fornece lemas verbais; o ICF fica em uma tabela numérica separada.
 
 **Risco de procedência:** a licença MIT do repositório é registrada, mas a origem de cada dicionário que compõe o agregado não está descrita linha a linha. Antes de redistribuir os dados agregados, confirme que a licença declarada cobre todos os conteúdos de terceiros. A importação exige confirmação explícita.
 
