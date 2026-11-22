@@ -1,4 +1,4 @@
-"""Teste de integração com os quatro arquivos Turtle oficiais OpenWordNet-PT."""
+"""Teste de integração com os arquivos Turtle oficiais OpenWordNet-PT."""
 from __future__ import annotations
 import argparse
 from pathlib import Path
