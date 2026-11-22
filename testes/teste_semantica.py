@@ -235,6 +235,20 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         )
         self.assertEqual(saidas, ["capturado", "finalizado"])
 
+    def test_validador_reconhece_biblioteca_de_arquivos(self) -> None:
+        compilador = CompiladorSemantico()
+        resultado = compilador.compilar(
+            'escrever_arquivo("saida.txt", "Lume")\n'
+            'mostre ler_arquivo("saida.txt")\n'
+            'mostre existe_arquivo("saida.txt")'
+        )
+        self.assertEqual(len(resultado.programa.instrucoes), 3)
+
+    def test_frontend_semantico_preserva_importacao(self) -> None:
+        compilador = CompiladorSemantico()
+        resultado = compilador.compilar('importar "apoio.lume"')
+        self.assertEqual(resultado.programa.instrucoes[0].operacao, "importar_modulo")
+
     def test_atribuicao_a_nome_inexistente_e_rejeitada(self) -> None:
         compilador = CompiladorSemantico()
         with self.assertRaisesRegex(ErroSemantico, "não foi declarada"):

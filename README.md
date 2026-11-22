@@ -235,3 +235,16 @@ fim
 ```
 
 Consulte [docs/sintaxe.md](docs/sintaxe.md) para as regras e limitações.
+
+
+## Módulos e arquivos locais
+
+A Lume suporta importação de módulos .lume e operações de leitura e escrita de texto UTF-8. Por padrão, a CLI define a pasta do arquivo principal como raiz do projeto. Importações e operações de arquivo ficam confinadas a essa raiz; arquivos e módulos têm limite de 1 MiB, e ciclos de importação são rejeitados.
+
+~~~text
+importar "apoio.lume"
+escrever_arquivo("resultado.txt", "Olá")
+mostrar ler_arquivo("resultado.txt")
+~~~
+
+A importação atual compartilha o ambiente do programa e não oferece namespaces ou importações seletivas. Consulte a gramática para as restrições completas.

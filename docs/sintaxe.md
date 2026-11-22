@@ -145,3 +145,27 @@ fim
 ```
 
 `capture` pode receber um identificador opcional para armazenar a mensagem do erro. `finalmente` é opcional e é executado mesmo quando o erro não é capturado. `lance` interrompe o fluxo atual com um erro de execução. O mecanismo captura erros da linguagem, não exceções arbitrárias do processo hospedeiro.
+
+
+## Módulos locais
+
+Um programa pode carregar outro arquivo Lume com:
+
+~~~text
+importar "apoio.lume"
+~~~
+
+O caminho é relativo ao diretório do arquivo principal executado pela CLI. O módulo é executado uma única vez por instância do interpretador; novas importações do mesmo caminho reutilizam o módulo carregado. Ciclos de importação são rejeitados. As declarações do módulo são disponibilizadas no ambiente compartilhado do programa; esta versão ainda não oferece espaços de nomes nem importação seletiva.
+
+Módulos precisam usar a extensão .lume, estar dentro do diretório raiz do projeto e ter no máximo 1 MiB. Caminhos absolutos e travessia para fora do projeto são rejeitados.
+
+## Biblioteca de arquivos
+
+A biblioteca padrão fornece:
+
+- ler_arquivo(caminho): lê texto UTF-8.
+- escrever_arquivo(caminho, texto): cria ou substitui um arquivo.
+- anexar_arquivo(caminho, texto): acrescenta texto ao final.
+- existe_arquivo(caminho): verifica se um arquivo existe.
+
+Os caminhos são relativos ao diretório raiz do projeto, não podem escapar dele e os arquivos são limitados a 1 MiB. Os diretórios pais precisam existir. A biblioteca não oferece acesso a arquivos fora dessa raiz. Isso é uma restrição de escopo, não uma sandbox de segurança contra código hostil.

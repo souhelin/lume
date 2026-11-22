@@ -132,3 +132,8 @@ class Tentar:
 @dataclass(slots=True)
 class Lancar:
     valor: object
+
+
+@dataclass(slots=True)
+class Importar:
+    caminho: str

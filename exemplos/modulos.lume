@@ -1,0 +1,4 @@
+importar "apoio.lume"
+mostrar mensagem
+escrever_arquivo("resultado.txt", mensagem)
+mostrar ler_arquivo("resultado.txt")

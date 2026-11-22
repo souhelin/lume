@@ -11,7 +11,7 @@ from typing import Any
 
 from .erros import ErroSemantico
 from .nos import (
-    Atribuir, AtribuirIndice, Tentar, Lancar, Binaria, Chamada, Condicional, Continuar, Definir,
+    Atribuir, AtribuirIndice, Tentar, Lancar, Importar, Binaria, Chamada, Condicional, Continuar, Definir,
     ExpressaoInstrucao, FuncaoDeclaracao, Indice, Interromper, Enquanto,
     ListaLiteral, Literal, Mostrar, ParaCada, Programa, Retornar, Unaria,
     Variavel,
@@ -114,6 +114,8 @@ def instrucao_para_ir(no: object) -> InstrucaoIR:
         return InstrucaoIR("retornar", (
             None if no.valor is None else expressao_para_ir(no.valor),
         ))
+    if isinstance(no, Importar):
+        return InstrucaoIR("importar_modulo", (no.caminho,))
     if isinstance(no, AtribuirIndice):
         return InstrucaoIR("atribuir_indice", (
             expressao_para_ir(no.colecao), expressao_para_ir(no.indice),
@@ -194,6 +196,8 @@ def instrucao_ir_para_no(instrucao: InstrucaoIR) -> object:
         )
     if op == "retornar":
         return Retornar(None if args[0] is None else expressao_ir_para_no(args[0]))
+    if op == "importar_modulo":
+        return Importar(args[0])
     if op == "atribuir_indice":
         return AtribuirIndice(
             expressao_ir_para_no(args[0]), expressao_ir_para_no(args[1]),

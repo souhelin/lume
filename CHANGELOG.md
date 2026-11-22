@@ -20,3 +20,13 @@
 - Adicionados blocos `tente`, `capture`, `finalmente` e `lance` para tratamento de erros da linguagem.
 - IR e validador semântico estendidos para essas operações.
 - Testes de regressão para mutação por índice e fluxo de tratamento de erros.
+
+
+## Próxima etapa — módulos e arquivos locais
+
+- Adicionada instrução importar "arquivo.lume" com cache por instância e detecção de ciclos.
+- Adicionadas funções nativas de leitura, escrita, anexação e verificação de arquivos UTF-8.
+- Caminhos confinados à raiz do projeto, com rejeição de caminhos absolutos e travessia de diretório.
+- Limites de 1 MiB para módulos e conteúdo de arquivos.
+- Preservado o orçamento global de etapas ao executar módulos importados.
+- Testes de importação, ciclos, acesso fora da raiz e operações de arquivos.
