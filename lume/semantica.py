@@ -74,7 +74,7 @@ def detectar_sintaxe_semantica(fonte: str) -> bool:
         "defina", "atribua", "atribui", "atualize", "atualiza", "some", "somar",
         "subtraia", "subtrai", "multiplique", "multiplica", "divida",
         "divide", "compare", "compara", "repita", "repete", "adicione",
-        "adiciona", "remova", "remove", "retorne", "devolva", "tente", "lance", "importar",
+        "adiciona", "remova", "remove", "retorne", "devolva", "tente", "lance",
     )
     for linha in fonte.splitlines():
         texto = normalizar_termo(linha).lstrip()
