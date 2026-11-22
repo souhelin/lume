@@ -30,7 +30,7 @@ Os módulos responsáveis são:
 - vocabulario.py: registro expansível de expressões, significado, categoria, intenção, operações associadas, relações, regras e ambiguidades.
 - semantica.py: padrões naturais documentados, contexto, compilação, análise de ambiguidades e validador estático.
 - representacao.py: IR independente da frase original e adaptadores entre IR e AST.
-- erros.py: categorias de erro semântico e ambiguidade, além dos erros léxicos, sintáticos e de execução.
+- erros.py: categorias de erro semântico e ambiguidade, além dos erros léxicos, sintáticos e de execução.\n- permissoes.py: allowlist explícita de hosts externos, negada por padrão.\n- rede.py: cliente HTTP(S) baseado apenas na biblioteca padrão, carregado sob demanda.
 
 A camada semântica não cria código Python e não chama eval ou exec. O vocabulário não executa palavras isoladamente: os padrões reconhecidos viram instruções canônicas; estas são transformadas em IR e validadas antes de alcançar o executor existente.
 
@@ -61,10 +61,16 @@ lume/
   representacao.py  representação intermediária
   semantica.py      compilador, contexto e validador semântico
   tokens.py         estrutura dos tokens
-  vocabulario.py    dicionário semântico expansível
+  vocabulario.py    dicionário semântico expansível\n  permissoes.py     permissões explícitas por host\n  rede.py           cliente HTTP(S) opcional e limitado
   __main__.py       execução por python -m lume
   __init__.py       API pública
 ~~~
+
+## Fronteira de conectividade
+
+A inicialização do interpretador não importa o cliente HTTP. O módulo `rede.py` é carregado somente quando `http_obter`, `http_enviar` ou `baixar` são chamados. O objeto `PermissoesRede` é criado com lista vazia por padrão; a CLI e a API podem receber hosts autorizados explicitamente. A camada de rede não participa da compilação semântica nem do parser.
+
+O fluxo online é: chamada explícita da biblioteca padrão → validação de host e esquema → cliente HTTP sob demanda → requisição com timeout e limite de resposta → resultado ou erro da Lume. Redirecionamentos são recusados para impedir que uma autorização para um host seja transferida silenciosamente a outro.
 
 ## Limites conhecidos
 
