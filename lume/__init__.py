@@ -4,6 +4,7 @@ __version__ = "0.3.0"
 
 from .erros import (ErroAmbiguidade, ErroExecucao, ErroLume, ErroLexico, ErroSemantico, ErroSintatico, Posicao)
 from .interpretador import Interpretador
+from .permissoes import PermissoesRede
 from .formatador import formatar_fonte
 from .parser import analisar_sintaxe
 from .representacao import ExpressaoIR, InstrucaoIR, ProgramaIR
@@ -24,6 +25,7 @@ from .vocabulario import (
 
 __all__ = [
     "Interpretador",
+    "PermissoesRede",
     "formatar_fonte",
     "ErroLume",
     "ErroLexico",

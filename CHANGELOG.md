@@ -1,5 +1,15 @@
 # Histórico de alterações
 
+## Não lançado — arquitetura Offline-First e conectividade opcional
+
+- Mantido o núcleo semântico e tradicional independente de Internet, sem dependências externas obrigatórias.
+- Adicionado controle de permissões de rede negado por padrão, com autorização explícita de hosts exatos pela API ou CLI.
+- Adicionado cliente HTTP(S) opcional e carregado sob demanda, com timeout, limites de payload/resposta, TLS padrão e redirecionamentos desativados.
+- Adicionadas as funções `http_obter`, `http_enviar` e `baixar` à biblioteca padrão.
+- Adicionados testes de execução offline, permissões, falhas de conexão e limites de requisição.
+- Documentadas a arquitetura, a configuração de permissões e as limitações de segurança.
+- Corrigida a classificação de tags `v0.x` como pré-lançamentos no workflow de release.
+
 ## Não lançado — núcleo semântico em desenvolvimento
 
 - Adicionado dicionário semântico extensível com expressões, intenções, operações, regras e ambiguidades.

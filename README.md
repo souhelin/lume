@@ -188,6 +188,14 @@ Execute a suíte de testes com a biblioteca padrão do Python:
 python -m unittest discover -s testes -v
 ```
 
+## Arquitetura Offline-First
+
+O núcleo da Lume funciona sem Internet: interpretação tradicional e semântica, vocabulário nativo, operações matemáticas, módulos e arquivos locais não dependem de rede. A conectividade é opcional, bloqueada por padrão e só fica disponível para hosts explicitamente autorizados.
+
+A CLI aceita `--permitir-rede HOST` (repetível) para autorizar um host específico. A linguagem oferece `http_obter(url)`, `http_enviar(url, texto)` e `baixar(url, caminho)`; essas funções nunca são chamadas automaticamente. Respostas e downloads têm limite de 1 MiB, timeout de 10 segundos e redirecionamentos desativados.
+
+Consulte [a arquitetura Offline-First](docs/offline-first.md) para permissões, exemplos, API Python e limites de segurança.
+
 ## Arquitetura
 
 ```text
@@ -264,7 +272,7 @@ lume --formatar --gravar programa.lume
 Sem --gravar, o resultado vai para a saída padrão e o arquivo original permanece intacto. O formatador normaliza recuo e espaços externos; não reescreve expressões nem aplica um estilo de pontuação.
 
 
-A biblioteca padrão está isolada em lume/biblioteca.py, separada do núcleo de avaliação e execução.
+A biblioteca padrão está isolada em lume/biblioteca.py, separada do núcleo de avaliação e execução. O cliente HTTP opcional fica em lume/rede.py e é carregado sob demanda; permissões por host ficam em lume/permissoes.py.
 
 
 A integração contínua também constrói o wheel e testa sua instalação em um ambiente virtual temporário, fora da árvore do repositório. Consulte scripts/validar_wheel.py.
