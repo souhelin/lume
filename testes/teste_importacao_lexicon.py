@@ -163,14 +163,62 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
 
     def test_migracao_de_esquema_v1_para_v5(self):
         self.lexicon.fechar()
+        self.db_path.unlink(missing_ok=True)
         conexao = sqlite3.connect(self.db_path)
-        conexao.execute("PRAGMA user_version = 1")
+        conexao.executescript(
+            """
+            PRAGMA foreign_keys=ON;
+            CREATE TABLE fontes (
+                id TEXT PRIMARY KEY, nome TEXT NOT NULL, licenca TEXT NOT NULL,
+                versao TEXT NOT NULL, url TEXT NOT NULL, atribuicao TEXT NOT NULL,
+                verificada INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE entradas (
+                id TEXT PRIMARY KEY, lema TEXT NOT NULL, lema_normalizado TEXT NOT NULL,
+                classe TEXT NOT NULL, definicao TEXT,
+                fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                UNIQUE (lema_normalizado, classe, fonte_id)
+            );
+            CREATE TABLE formas (
+                forma_normalizada TEXT NOT NULL, forma_original TEXT NOT NULL,
+                entrada_id TEXT NOT NULL REFERENCES entradas(id) ON DELETE CASCADE,
+                tipo TEXT NOT NULL,
+                PRIMARY KEY (forma_normalizada, entrada_id, tipo)
+            );
+            CREATE TABLE relacoes (
+                origem_id TEXT NOT NULL REFERENCES entradas(id) ON DELETE CASCADE,
+                destino_id TEXT NOT NULL REFERENCES entradas(id) ON DELETE CASCADE,
+                tipo TEXT NOT NULL, fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                PRIMARY KEY (origem_id, destino_id, tipo, fonte_id)
+            );
+            CREATE TABLE contextos (
+                entrada_id TEXT NOT NULL REFERENCES entradas(id) ON DELETE CASCADE,
+                contexto TEXT NOT NULL, fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                PRIMARY KEY (entrada_id, contexto, fonte_id)
+            );
+            INSERT INTO fontes VALUES
+                ('fonte-v1', 'Fonte antiga', 'MIT', '1', 'https://example.org', 'Crédito', 1);
+            INSERT INTO entradas VALUES
+                ('casa-v1', 'casa', 'casa', 'substantivo', NULL, 'fonte-v1');
+            INSERT INTO entradas VALUES
+                ('lar-v1', 'lar', 'lar', 'substantivo', NULL, 'fonte-v1');
+            INSERT INTO formas VALUES ('casa', 'casa', 'casa-v1', 'lema');
+            INSERT INTO relacoes VALUES ('casa-v1', 'lar-v1', 'sinonimo', 'fonte-v1');
+            INSERT INTO contextos VALUES ('casa-v1', 'moradia', 'fonte-v1');
+            PRAGMA user_version=1;
+            """
+        )
         conexao.close()
         migrado = Lexicon(self.db_path)
         try:
             self.assertEqual(
                 migrado._db.execute("PRAGMA user_version").fetchone()[0], 5
             )
+            entrada = migrado.buscar("casa")[0].entrada
+            self.assertEqual(entrada.licenca, "MIT")
+            self.assertEqual(entrada.versao_fonte, "1")
+            self.assertEqual(migrado.contextos("casa-v1"), ("moradia",))
+            self.assertEqual(migrado.relacoes("casa-v1")[0].lema, "lar")
             self.assertEqual(migrado.estatisticas()["sentidos"], 0)
         finally:
             migrado.fechar()
@@ -297,7 +345,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
             delta = (json.dumps({
                 "op": "upsert", "source": "fonte", "id": "nova",
                 "lemma": "nova", "pos": "substantivo",
-            }) + "\\n").encode()
+            }) + "\n").encode()
             manifesto = {
                 "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
@@ -334,7 +382,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
             }
             delta = (json.dumps({
                 "op": "operacao_inexistente", "source": "base",
-            }) + "\\n").encode()
+            }) + "\n").encode()
             manifesto = {
                 "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
