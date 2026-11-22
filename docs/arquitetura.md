@@ -78,7 +78,7 @@ O fluxo online é: chamada explícita da biblioteca padrão → validação de h
 
 ## Limites conhecidos
 
-O front-end natural é um conjunto explícito de padrões, não um analisador de português irrestrito. A inferência de tipos é parcial. Ainda não existem sistema de módulos, manipulação de arquivos na linguagem, exceções definidas pelo usuário, depurador, bytecode ou compilador nativo. O runtime de referência usa a memória e o coletor de lixo do Python. Essas limitações devem ser consideradas antes de avaliar desempenho ou segurança em produção.
+O front-end natural é um conjunto explícito de padrões, não um analisador de português irrestrito. A inferência de tipos é parcial. Ainda não existem exceções definidas pelo usuário, depurador, bytecode ou compilador nativo. O runtime de referência usa a memória e o coletor de lixo do Python. Essas limitações devem ser consideradas antes de avaliar desempenho ou segurança em produção.
 
 
 ## Diagnósticos e posição de origem
