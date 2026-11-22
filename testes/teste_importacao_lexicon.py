@@ -169,7 +169,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         migrado = Lexicon(self.db_path)
         try:
             self.assertEqual(
-                migrado._db.execute("PRAGMA user_version").fetchone()[0], 4
+                migrado._db.execute("PRAGMA user_version").fetchone()[0], 5
             )
             self.assertEqual(migrado.estatisticas()["sentidos"], 0)
         finally:
@@ -258,7 +258,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
             ]
             delta = ("".join(json.dumps(item) + "\n" for item in operacoes)).encode()
             manifesto = {
-                "schema_version": 4, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             chave = Ed25519PrivateKey.generate()
@@ -297,7 +297,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 "version": "2", "url": "https://example.org", "attribution": "Crédito",
             }
             manifesto = {
-                "schema_version": 4, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             pacote = self._pacote(root, chave, delta, manifesto, corromper_assinatura=True)
