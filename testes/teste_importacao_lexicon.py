@@ -233,13 +233,30 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 "version": "2", "url": "https://example.org",
                 "attribution": "Crédito",
             }
-            delta = (
-                json.dumps({
+            operacoes = [
+                {
                     "op": "upsert", "source": "fonte-v2", "id": "nova",
-                    "lemma": "nova", "pos": "adjetivo", "license": "MIT",
-                    "version": "2",
-                }) + "\n"
-            ).encode()
+                    "lemma": "nova", "pos": "substantivo",
+                },
+                {
+                    "op": "upsert", "source": "fonte-v2", "id": "outra",
+                    "lemma": "outra", "pos": "substantivo",
+                },
+                {
+                    "op": "upsert_sense", "source": "fonte-v2", "id": "sense-1",
+                    "pos": "substantivo", "definition": "sentido de teste",
+                    "members": ["nova", "outra"],
+                },
+                {
+                    "op": "upsert_relation", "source": "fonte-v2",
+                    "origin": "nova", "destination": "outra", "type": "sinonimo",
+                },
+                {
+                    "op": "upsert_frequency", "source": "fonte-v2",
+                    "form": "nova", "value": 2.5,
+                },
+            ]
+            delta = ("".join(json.dumps(item) + "\\n" for item in operacoes)).encode()
             manifesto = {
                 "schema_version": 4, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
@@ -248,10 +265,14 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
             pacote = self._pacote(root, chave, delta, manifesto)
             publica = chave.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
             resultado = aplicar_pacote_assinado(db, pacote, publica)
-            self.assertEqual(resultado.operacoes, 1)
+            self.assertEqual(resultado.operacoes, 5)
             self.assertTrue(Path(resultado.backup).is_file())
             with Lexicon(db) as atualizado:
                 self.assertEqual(len(atualizado.buscar("nova")), 1)
+                entrada_nova = atualizado.buscar("nova")[0].entrada
+                self.assertEqual(len(atualizado.sentidos(entrada_nova.identificador)), 1)
+                self.assertEqual(atualizado.relacoes("nova"), (atualizado.buscar("outra")[0].entrada,))
+                self.assertEqual(atualizado.frequencia("nova"), (2.5,))
 
     def test_assinatura_invalida_nao_altera_banco_ativo(self):
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
