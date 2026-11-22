@@ -15,7 +15,7 @@ from collections import OrderedDict
 from typing import Iterable
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 CACHE_MAXIMO = 512
 
 
@@ -88,27 +88,58 @@ class Lexicon:
             )
         if versao == SCHEMA_VERSION:
             return
-        if versao == 1:
+        if versao in (1, 2):
             with self._db:
-                self._db.executescript(
+                if versao == 1:
+                    self._db.executescript(
+                        """
+                        CREATE TABLE IF NOT EXISTS sentidos (
+                            id TEXT PRIMARY KEY,
+                            fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                            classe TEXT NOT NULL,
+                            definicao TEXT
+                        );
+                        CREATE TABLE IF NOT EXISTS sentido_entradas (
+                            sentido_id TEXT NOT NULL REFERENCES sentidos(id) ON DELETE CASCADE,
+                            entrada_id TEXT NOT NULL REFERENCES entradas(id) ON DELETE CASCADE,
+                            ordem INTEGER NOT NULL DEFAULT 0,
+                            PRIMARY KEY (sentido_id, entrada_id)
+                        );
+                        CREATE INDEX IF NOT EXISTS idx_sentido_entradas_entrada
+                            ON sentido_entradas(entrada_id);
+                        """
+                    )
+                colunas_entradas = {
+                    row["name"] for row in self._db.execute("PRAGMA table_info(entradas)")
+                }
+                if "licenca" not in colunas_entradas:
+                    self._db.execute("ALTER TABLE entradas ADD COLUMN licenca TEXT NOT NULL DEFAULT ''")
+                if "versao_fonte" not in colunas_entradas:
+                    self._db.execute("ALTER TABLE entradas ADD COLUMN versao_fonte TEXT NOT NULL DEFAULT ''")
+                self._db.execute(
                     """
-                    CREATE TABLE IF NOT EXISTS sentidos (
-                        id TEXT PRIMARY KEY,
-                        fonte_id TEXT NOT NULL REFERENCES fontes(id),
-                        classe TEXT NOT NULL,
-                        definicao TEXT
-                    );
-                    CREATE TABLE IF NOT EXISTS sentido_entradas (
-                        sentido_id TEXT NOT NULL REFERENCES sentidos(id) ON DELETE CASCADE,
-                        entrada_id TEXT NOT NULL REFERENCES entradas(id) ON DELETE CASCADE,
-                        ordem INTEGER NOT NULL DEFAULT 0,
-                        PRIMARY KEY (sentido_id, entrada_id)
-                    );
-                    CREATE INDEX IF NOT EXISTS idx_sentido_entradas_entrada
-                        ON sentido_entradas(entrada_id);
+                    UPDATE entradas
+                    SET licenca=(SELECT licenca FROM fontes WHERE id=entradas.fonte_id),
+                        versao_fonte=(SELECT versao FROM fontes WHERE id=entradas.fonte_id)
+                    WHERE licenca='' OR versao_fonte=''
                     """
                 )
-                self._db.execute("PRAGMA user_version = 2")
+                colunas_sentidos = {
+                    row["name"] for row in self._db.execute("PRAGMA table_info(sentidos)")
+                }
+                if "licenca" not in colunas_sentidos:
+                    self._db.execute("ALTER TABLE sentidos ADD COLUMN licenca TEXT NOT NULL DEFAULT ''")
+                if "versao_fonte" not in colunas_sentidos:
+                    self._db.execute("ALTER TABLE sentidos ADD COLUMN versao_fonte TEXT NOT NULL DEFAULT ''")
+                self._db.execute(
+                    """
+                    UPDATE sentidos
+                    SET licenca=(SELECT licenca FROM fontes WHERE id=sentidos.fonte_id),
+                        versao_fonte=(SELECT versao FROM fontes WHERE id=sentidos.fonte_id)
+                    WHERE licenca='' OR versao_fonte=''
+                    """
+                )
+                self._db.execute("PRAGMA user_version = 3")
             return
         with self._db:
             self._db.executescript(
@@ -130,6 +161,8 @@ class Lexicon:
                     classe TEXT NOT NULL,
                     definicao TEXT,
                     fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                    licenca TEXT NOT NULL,
+                    versao_fonte TEXT NOT NULL,
                     UNIQUE (lema_normalizado, classe, fonte_id)
                 );
                 CREATE TABLE IF NOT EXISTS formas (
@@ -160,7 +193,9 @@ class Lexicon:
                     id TEXT PRIMARY KEY,
                     fonte_id TEXT NOT NULL REFERENCES fontes(id),
                     classe TEXT NOT NULL,
-                    definicao TEXT
+                    definicao TEXT,
+                    licenca TEXT NOT NULL,
+                    versao_fonte TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS sentido_entradas (
                     sentido_id TEXT NOT NULL REFERENCES sentidos(id) ON DELETE CASCADE,
@@ -239,17 +274,22 @@ class Lexicon:
                 raise ValueError("licença e versão da entrada divergem dos metadados da fonte")
             self._db.execute(
                 """
-                INSERT INTO entradas(id, lema, lema_normalizado, classe, definicao, fonte_id)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO entradas(
+                    id, lema, lema_normalizado, classe, definicao, fonte_id,
+                    licenca, versao_fonte
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     lema=excluded.lema, lema_normalizado=excluded.lema_normalizado,
                     classe=excluded.classe, definicao=excluded.definicao,
-                    fonte_id=excluded.fonte_id
+                    fonte_id=excluded.fonte_id, licenca=excluded.licenca,
+                    versao_fonte=excluded.versao_fonte
                 """,
                 (
                     entrada.identificador, entrada.lema,
                     normalizar_forma(entrada.lema), entrada.classe_gramatical,
-                    entrada.definicao, entrada.fonte,
+                    entrada.definicao, entrada.fonte, entrada.licenca,
+                    entrada.versao_fonte,
                 ),
             )
             self._db.execute("DELETE FROM formas WHERE entrada_id=?", (entrada.identificador,))
@@ -337,13 +377,22 @@ class Lexicon:
                 raise ValueError("todas as entradas do sentido precisam existir")
             self._db.execute(
                 """
-                INSERT INTO sentidos(id, fonte_id, classe, definicao)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO sentidos(id, fonte_id, classe, definicao, licenca, versao_fonte)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     fonte_id=excluded.fonte_id, classe=excluded.classe,
-                    definicao=excluded.definicao
+                    definicao=excluded.definicao, licenca=excluded.licenca,
+                    versao_fonte=excluded.versao_fonte
                 """,
-                (identificador, fonte_id, classe, definicao),
+                (
+                    identificador, fonte_id, classe, definicao,
+                    self._db.execute(
+                        "SELECT licenca FROM fontes WHERE id=?", (fonte_id,)
+                    ).fetchone()[0],
+                    self._db.execute(
+                        "SELECT versao FROM fontes WHERE id=?", (fonte_id,)
+                    ).fetchone()[0],
+                ),
             )
             self._db.execute(
                 "DELETE FROM sentido_entradas WHERE sentido_id=?", (identificador,)
@@ -358,7 +407,7 @@ class Lexicon:
         with self._lock:
             rows = self._db.execute(
                 """
-                SELECT s.id, s.classe, s.definicao, s.fonte_id
+                SELECT s.id, s.classe, s.definicao, s.fonte_id, s.licenca, s.versao_fonte
                 FROM sentido_entradas se
                 JOIN sentidos s ON s.id=se.sentido_id
                 WHERE se.entrada_id=?
@@ -379,7 +428,7 @@ class Lexicon:
     def _entrada_da_linha(self, row: sqlite3.Row) -> EntradaLexical:
         return EntradaLexical(
             row["id"], row["lema"], row["classe"], row["definicao"],
-            row["fonte_id"], row["licenca"], row["versao"],
+            row["fonte_id"], row["licenca"], row["versao_fonte"],
         )
 
     def buscar(
@@ -397,7 +446,7 @@ class Lexicon:
                 rows = self._db.execute(
                     """
                     SELECT e.id, e.lema, e.classe, e.definicao, e.fonte_id,
-                           f.licenca, f.versao, x.forma_original, x.tipo
+                           e.licenca, e.versao_fonte, x.forma_original, x.tipo
                     FROM formas x
                     JOIN entradas e ON e.id=x.entrada_id
                     JOIN fontes f ON f.id=e.fonte_id
@@ -410,7 +459,7 @@ class Lexicon:
                 rows = self._db.execute(
                     """
                     SELECT e.id, e.lema, e.classe, e.definicao, e.fonte_id,
-                           f.licenca, f.versao, e.lema AS forma_original,
+                           e.licenca, e.versao_fonte, e.lema AS forma_original,
                            'lema' AS tipo
                     FROM entradas e JOIN fontes f ON f.id=e.fonte_id
                     WHERE e.lema_normalizado=?
@@ -433,7 +482,7 @@ class Lexicon:
     def relacoes(self, identificador: str, tipo: str | None = None) -> tuple[EntradaLexical, ...]:
         consulta = """
             SELECT e.id, e.lema, e.classe, e.definicao, e.fonte_id,
-                   f.licenca, f.versao
+                   e.licenca, e.versao_fonte
             FROM relacoes r
             JOIN entradas e ON e.id=r.destino_id
             JOIN fontes f ON f.id=e.fonte_id
