@@ -456,7 +456,7 @@ class Lexicon:
         with self._lock:
             return {
                 tabela: int(self._db.execute(f"SELECT COUNT(*) FROM {tabela}").fetchone()[0])
-                for tabela in ("fontes", "entradas", "formas", "relacoes", "contextos")
+                for tabela in ("fontes", "entradas", "formas", "relacoes", "contextos", "sentidos", "sentido_entradas")
             }
 
     def _limpar_cache(self) -> None:
