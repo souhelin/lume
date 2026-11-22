@@ -60,6 +60,18 @@ class TestesPermissoesRede(unittest.TestCase):
             with self.assertRaisesRegex(ErroExecucao, "conexão"):
                 cliente.requisitar("https://exemplo.com")
 
+    def test_resposta_externa_tem_limite(self):
+        class Resposta:
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+            def read(self, limite):
+                return b"x" * limite
+        cliente = ClienteRede(PermissoesRede(["exemplo.com"]))
+        with patch.object(cliente._opener, "open", return_value=Resposta()):
+            with self.assertRaisesRegex(ErroExecucao, "resposta externa"):
+                cliente.requisitar("https://exemplo.com")
     def test_corpo_da_requisicao_tem_limite(self):
         cliente = ClienteRede(PermissoesRede(["exemplo.com"]))
         with self.assertRaisesRegex(ErroExecucao, "corpo da requisição"):
