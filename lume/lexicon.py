@@ -390,10 +390,14 @@ class Lexicon:
                     raise ValueError("destino e tipo de relação são obrigatórios")
                 self._db.execute(
                     """
-                    INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
-                    VALUES (?, ?, ?, ?)
+                    INSERT OR IGNORE INTO relacoes
+                        (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
+                    VALUES (?, ?, ?, ?, ?, ?)
                     """,
-                    (entrada.identificador, destino, tipo, entrada.fonte),
+                    (
+                        entrada.identificador, destino, tipo, entrada.fonte,
+                        entrada.licenca, entrada.versao_fonte,
+                    ),
                 )
             for contexto in contextos:
                 if contexto.strip():
