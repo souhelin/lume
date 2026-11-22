@@ -53,8 +53,8 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
     def test_importa_lista_de_verbos_e_pontuacao_icf(self):
         verbos = self.root / "verbos"
         icf = self.root / "icf"
-        verbos.write_text("cantar\\nser\\n", encoding="utf-8")
-        icf.write_text("cantar,5.23\\nser,3.10\\n", encoding="utf-8")
+        verbos.write_text("cantar\nser\n", encoding="utf-8")
+        icf.write_text("cantar,5.23\nser,3.10\n", encoding="utf-8")
         importar_fserb_verbos(
             self.lexicon, verbos, versao="fixture-1", confirmar_direitos=True
         )
@@ -161,7 +161,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         fachada = InterpretadorSemantico(interpretador)
         self.assertEqual(len(fachada.analisar_lexico("o rio")), 1)
 
-    def test_migracao_de_esquema_v1_para_v2(self):
+    def test_migracao_de_esquema_v1_para_v4(self):
         self.lexicon.fechar()
         conexao = sqlite3.connect(self.db_path)
         conexao.execute("PRAGMA user_version = 1")
@@ -169,7 +169,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         migrado = Lexicon(self.db_path)
         try:
             self.assertEqual(
-                migrado._db.execute("PRAGMA user_version").fetchone()[0], 2
+                migrado._db.execute("PRAGMA user_version").fetchone()[0], 4
             )
             self.assertEqual(migrado.estatisticas()["sentidos"], 0)
         finally:
