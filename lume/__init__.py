@@ -21,6 +21,8 @@ from .lexical_import import (
     ResultadoImportacao,
     importar_fserb_lexico,
     importar_fserb_conjugacoes,
+    importar_fserb_verbos,
+    importar_fserb_icf,
     importar_openwordnet_tsv,
     importar_openwordnet_ttl,
 )
@@ -52,6 +54,8 @@ __all__ = [
     "ResultadoImportacao",
     "importar_fserb_lexico",
     "importar_fserb_conjugacoes",
+    "importar_fserb_verbos",
+    "importar_fserb_icf",
     "importar_openwordnet_tsv",
     "importar_openwordnet_ttl",
     "ResultadoAtualizacao",
