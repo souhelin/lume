@@ -15,7 +15,7 @@ from collections import OrderedDict
 from typing import Iterable
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 CACHE_MAXIMO = 512
 
 
@@ -89,10 +89,16 @@ class Lexicon:
             )
         if versao == SCHEMA_VERSION:
             return
+        if versao == 5:
+            with self._db:
+                self._migrar_contextos_sentido()
+                self._db.execute("PRAGMA user_version = 6")
+            return
         if versao == 4:
             with self._db:
                 self._migrar_procedencia_relacoes()
-                self._db.execute("PRAGMA user_version = 5")
+                self._migrar_contextos_sentido()
+                self._db.execute("PRAGMA user_version = 6")
             return
         if versao == 3:
             with self._db:
@@ -111,7 +117,8 @@ class Lexicon:
                     """
                 )
                 self._migrar_procedencia_relacoes()
-                self._db.execute("PRAGMA user_version = 5")
+                self._migrar_contextos_sentido()
+                self._db.execute("PRAGMA user_version = 6")
             return
         if versao in (1, 2):
             with self._db:
@@ -180,7 +187,8 @@ class Lexicon:
                     "CREATE INDEX IF NOT EXISTS idx_frequencias_forma ON frequencias(forma_normalizada)"
                 )
                 self._migrar_procedencia_relacoes()
-                self._db.execute("PRAGMA user_version = 5")
+                self._migrar_contextos_sentido()
+                self._db.execute("PRAGMA user_version = 6")
             return
         with self._db:
             self._db.executescript(
@@ -258,6 +266,14 @@ class Lexicon:
                     ordem INTEGER NOT NULL DEFAULT 0,
                     PRIMARY KEY (sentido_id, entrada_id)
                 );
+                CREATE TABLE IF NOT EXISTS sentido_contextos (
+                    sentido_id TEXT NOT NULL REFERENCES sentidos(id) ON DELETE CASCADE,
+                    contexto TEXT NOT NULL,
+                    fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                    licenca TEXT NOT NULL,
+                    versao_fonte TEXT NOT NULL,
+                    PRIMARY KEY (sentido_id, contexto, fonte_id)
+                );
                 CREATE INDEX IF NOT EXISTS idx_sentido_entradas_entrada
                     ON sentido_entradas(entrada_id);
                 CREATE INDEX IF NOT EXISTS idx_entradas_lema
@@ -294,6 +310,20 @@ class Lexicon:
                 WHERE licenca='' OR versao_fonte=''
                 """
             )
+
+    def _migrar_contextos_sentido(self) -> None:
+        self._db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sentido_contextos (
+                sentido_id TEXT NOT NULL REFERENCES sentidos(id) ON DELETE CASCADE,
+                contexto TEXT NOT NULL,
+                fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                licenca TEXT NOT NULL,
+                versao_fonte TEXT NOT NULL,
+                PRIMARY KEY (sentido_id, contexto, fonte_id)
+            )
+            """
+        )
 
     def fechar(self) -> None:
         with self._lock:
@@ -453,6 +483,7 @@ class Lexicon:
     def registrar_sentido(
         self, identificador: str, fonte_id: str, classe: str,
         definicao: str | None, entradas: Iterable[str],
+        contextos: Iterable[str] = (),
     ) -> None:
         """Registra um sentido/synset e associa suas entradas lexicais."""
         if not identificador.strip() or not classe.strip():
@@ -500,6 +531,26 @@ class Lexicon:
                 "INSERT INTO sentido_entradas(sentido_id, entrada_id, ordem) VALUES (?, ?, ?)",
                 ((identificador, membro, i) for i, membro in enumerate(membros)),
             )
+            self._db.execute(
+                "DELETE FROM sentido_contextos WHERE sentido_id=?", (identificador,)
+            )
+            fonte_meta = self._db.execute(
+                "SELECT licenca, versao FROM fontes WHERE id=?", (fonte_id,)
+            ).fetchone()
+            self._db.executemany(
+                """
+                INSERT INTO sentido_contextos
+                    (sentido_id, contexto, fonte_id, licenca, versao_fonte)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    (
+                        identificador, contexto.strip(), fonte_id,
+                        fonte_meta["licenca"], fonte_meta["versao"],
+                    )
+                    for contexto in contextos if contexto.strip()
+                ),
+            )
 
     def sentidos(self, identificador_entrada: str) -> tuple[dict[str, str | None], ...]:
         """Retorna os sentidos ligados a uma entrada, com procedência."""
@@ -515,6 +566,18 @@ class Lexicon:
                 (identificador_entrada,),
             ).fetchall()
             return tuple(dict(row) for row in rows)
+
+    def contextos_do_sentido(self, identificador_sentido: str) -> tuple[str, ...]:
+        """Retorna exemplos/contextos vinculados a um synset específico."""
+        with self._lock:
+            rows = self._db.execute(
+                """
+                SELECT contexto FROM sentido_contextos
+                WHERE sentido_id=? ORDER BY contexto
+                """,
+                (identificador_sentido,),
+            ).fetchall()
+            return tuple(row["contexto"] for row in rows)
 
     def termos_do_sentido(self, identificador_sentido: str) -> tuple[str, ...]:
         """Retorna os lemas associados a um synset, sem duplicatas."""
@@ -635,7 +698,7 @@ class Lexicon:
         with self._lock:
             return {
                 tabela: int(self._db.execute(f"SELECT COUNT(*) FROM {tabela}").fetchone()[0])
-                for tabela in ("fontes", "entradas", "formas", "relacoes", "contextos", "sentidos", "sentido_entradas", "frequencias")
+                for tabela in ("fontes", "entradas", "formas", "relacoes", "contextos", "sentidos", "sentido_entradas", "sentido_contextos", "frequencias")
             }
 
     def _limpar_cache(self) -> None:
