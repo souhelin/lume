@@ -69,6 +69,7 @@ class Interpretador:
         limite_passos: int = LIMITE_PASSOS,
         diretorio_raiz: str | Path | None = None,
         hosts_rede_permitidos: tuple[str, ...] | list[str] = (),
+        aviso_rede: Callable[[str], None] | None = None,
     ) -> None:
         self.saida = saida or print
         self.entrada = entrada or input
@@ -76,6 +77,7 @@ class Interpretador:
         self.diretorio_raiz = Path(diretorio_raiz or Path.cwd()).resolve()
         from .permissoes import PermissoesRede
         self.permissoes_rede = PermissoesRede(hosts_rede_permitidos)
+        self.aviso_rede = aviso_rede
         self._cliente_rede = None
         self._modulos_carregados: set[Path] = set()
         self._modulos_em_carga: set[Path] = set()
@@ -220,7 +222,7 @@ class Interpretador:
     def _http_obter(self, url: object) -> str:
         if not isinstance(url, str):
             raise ErroExecucao("o endereço HTTP precisa ser um texto")
-        self.permissoes_rede.autorizar_url(url)
+        self.permissoes_rede.autorizar_url(url, self.aviso_rede)
         return self._cliente_http().obter_texto(url)
 
     def _http_enviar(self, url: object, conteudo: object) -> str:
