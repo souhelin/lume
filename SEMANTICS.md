@@ -14,6 +14,22 @@ Uma palavra presente no Lexicon não se torna automaticamente uma instrução v�
 
 O resultado contém token, candidatos, pontuação, evidências, seleção e indicador de ambiguidade. Exemplos do WordNet ficam ligados ao synset, não apenas ao lema, evitando misturar automaticamente os exemplos de sentidos diferentes de uma palavra polissêmica. A análise não reescreve a fonte, AST ou IR e não executa conteúdo lexical. Se uma palavra tiver vários synsets e o contexto não separar as leituras, todos os sentidos permanecem candidatos e nenhum é escolhido.
 
+## Acesso pelo programa LUME
+
+Quando o interpretador recebe um banco lexical, duas funções nativas ficam disponíveis:
+
+- `consultar_lexico(texto)`: lista entradas, classe gramatical, definição e procedência.
+- `analisar_lexico(texto)`: lista candidatos e evidências, preservando a ambiguidade.
+
+Exemplo:
+
+```lume
+mostrar consultar_lexico("casa")
+mostrar analisar_lexico("o banco recebeu dinheiro")
+```
+
+Carregue o banco pela CLI com `lume --lexicon dados/lexicon.sqlite3 programa.lume` ou injete uma instância `Lexicon` pela API Python. Sem banco carregado, as funções nativas falham com mensagem explícita. O acesso lexical é consultivo e não transforma palavras em instruções executáveis.
+
 ## Estratégia atual
 
 - Tokenização Unicode preservando a forma normalizada.
