@@ -12,6 +12,7 @@ from .interpretador import Interpretador
 from .formatador import formatar_fonte
 from .parser import analisar_sintaxe
 from .semantica import InterpretadorSemantico, detectar_sintaxe_semantica
+from .permissoes import PermissoesRede
 
 
 def criar_parser_argumentos() -> argparse.ArgumentParser:
@@ -175,6 +176,10 @@ def iniciar_repl(modo_semantico: bool | None = None, hosts_rede_permitidos: list
 def main(argumentos: list[str] | None = None) -> int:
     parser = criar_parser_argumentos()
     opcoes = parser.parse_args(argumentos)
+    try:
+        PermissoesRede(opcoes.permitir_rede)
+    except ValueError as erro:
+        parser.error(str(erro))
     modo_semantico = True if opcoes.semantico else False if opcoes.tradicional else None
     if opcoes.gravar and not opcoes.formatar:
         parser.error("--gravar só pode ser usado junto com --formatar")
