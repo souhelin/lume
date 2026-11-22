@@ -510,6 +510,21 @@ class Lexicon:
             ).fetchall()
             return tuple(dict(row) for row in rows)
 
+    def termos_do_sentido(self, identificador_sentido: str) -> tuple[str, ...]:
+        """Retorna os lemas associados a um synset, sem duplicatas."""
+        with self._lock:
+            rows = self._db.execute(
+                """
+                SELECT e.lema
+                FROM sentido_entradas se
+                JOIN entradas e ON e.id=se.entrada_id
+                WHERE se.sentido_id=?
+                ORDER BY se.ordem, e.lema
+                """,
+                (identificador_sentido,),
+            ).fetchall()
+            return tuple(row["lema"] for row in rows)
+
     def contextos(self, identificador: str) -> tuple[str, ...]:
         with self._lock:
             rows = self._db.execute(
