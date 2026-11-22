@@ -66,24 +66,40 @@ def _mostrar_erro(arquivo: Path, fonte: str, erro: ErroLume) -> None:
 def iniciar_repl() -> int:
     print(f"Lume {__version__} — ambiente interativo")
     print("Digite uma instrução por linha. Use 'sair' para encerrar.")
+    print("Blocos podem ocupar várias linhas e terminam com 'fim'.")
     interpretador = Interpretador()
     while True:
+        linhas: list[str] = []
         try:
             linha = input("lume> ")
+            if linha.strip().casefold() in {"sair", "encerrar"}:
+                return 0
+            if not linha.strip():
+                continue
+            linhas.append(linha)
+            while True:
+                fonte = "\\n".join(linhas) + "\\n"
+                try:
+                    programa = analisar_sintaxe(fonte)
+                    break
+                except ErroLume as erro:
+                    incompleto = (
+                        isinstance(erro, Exception)
+                        and erro.categoria == "Erro de sintaxe"
+                        and any(marca in erro.mensagem for marca in (
+                            "esperava 'fim'", "esperava 'então'", "esperava 'faça'",
+                            "esperava uma quebra de linha"
+                        ))
+                    )
+                    if not incompleto:
+                        raise
+                    linhas.append(input("... "))
+            interpretador.executar(programa)
         except (EOFError, KeyboardInterrupt):
             print()
             return 0
-        if linha.strip().casefold() in {"sair", "encerrar"}:
-            return 0
-        if not linha.strip():
-            continue
-        try:
-            programa = analisar_sintaxe(linha + "\n")
-            # O estado das variáveis é preservado durante a sessão.
-            interpretador.executar(programa)
         except ErroLume as erro:
             print(erro, file=sys.stderr)
-
 
 def main(argumentos: list[str] | None = None) -> int:
     parser = criar_parser_argumentos()

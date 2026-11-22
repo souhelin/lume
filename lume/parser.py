@@ -5,6 +5,7 @@ from __future__ import annotations
 from .erros import ErroSintatico
 from .lexer import analisar_lexico
 from .nos import (
+    Atribuir,
     Binaria,
     Chamada,
     Condicional,
@@ -57,6 +58,11 @@ class AnalisadorSintatico:
         if token.tipo != "IDENTIFICADOR":
             raise ErroSintatico("esperava uma instrução em português", token.posicao)
         palavra = str(token.valor)
+
+        if self._espiar_token(1).tipo == "IGUAL":
+            self._avancar()
+            self._avancar()
+            return Atribuir(palavra, self._expressao())
 
         if palavra in {"mostrar", "exibir"}:
             self._avancar()

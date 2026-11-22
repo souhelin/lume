@@ -18,7 +18,7 @@ mostrar expressão
 exibir expressão
 
 definir nome como expressão
-definir nome = expressão
+definir nome = expressão\nnome = expressão
 
 se condição então
     instruções
