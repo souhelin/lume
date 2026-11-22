@@ -24,6 +24,9 @@ def main() -> int:
     p.add_argument("--atribuicao", required=True)
     a = p.parse_args()
     chave = load_pem_private_key(a.chave_privada.read_bytes(), password=None)
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    if not isinstance(chave, Ed25519PrivateKey):
+        raise SystemExit("a chave privada precisa ser Ed25519 em formato PEM")
     delta = a.delta.read_bytes()
     manifesto = {
         "schema_version": SCHEMA_VERSION,
