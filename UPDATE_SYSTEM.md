@@ -30,7 +30,7 @@ Exemplo de operação:
 {"op":"upsert_frequency","source":"openwordnet-pt","form":"termo","value":1.75}
 ```
 
-Operações aceitas: `upsert`, `delete`, `upsert_sense`, `delete_sense`, `upsert_relation`, `delete_relation`, `upsert_frequency` e `delete_frequency`. A operação `upsert` usa os metadados de licença e versão assinados no manifesto. Exclusões são limitadas à fonte indicada. Licença e versão ficam gravadas em entradas, sentidos, relações e contextos, preservando a proveniência histórica mesmo quando os metadados da fonte avançam.
+Operações aceitas: `upsert`, `delete`, `upsert_sense`, `delete_sense`, `upsert_relation`, `delete_relation`, `upsert_frequency` e `delete_frequency`. A operação `upsert_sense` também pode carregar `contexts`, que substituem os exemplos/contextos do sentido. A operação `upsert` usa os metadados de licença e versão assinados no manifesto. Exclusões são limitadas à fonte indicada. Licença e versão ficam gravadas em entradas, sentidos, relações e contextos, preservando a proveniência histórica mesmo quando os metadados da fonte avançam.
 
 ## Aplicação e rollback
 
