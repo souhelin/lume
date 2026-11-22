@@ -733,19 +733,26 @@ class _Validador:
             funcao, argumentos = args
             nome = funcao.argumentos[0] if funcao.operacao == "referencia" else None
             if nome is not None:
-                aridade = contexto.funcoes.get(nome)
-                if aridade is None and nome not in contexto.variaveis:
+                if nome in contexto.funcoes:
+                    aridade_usuario = contexto.funcoes[nome]
+                    if len(argumentos) != aridade_usuario:
+                        raise ErroSemantico(
+                            f"a função '{nome}' espera {aridade_usuario} argumento(s), recebeu {len(argumentos)}"
+                        )
+                elif nome in contexto.variaveis:
+                    aridade = None
+                else:
                     aridade = FUNCOES_NATIVAS.get(nome)
-                if aridade is None and nome not in contexto.variaveis:
-                    raise ErroSemantico(
-                        f"função '{nome}' não definida; verifique o nome ou declare a função"
-                    )
-                if aridade is not None and not (aridade[0] <= len(argumentos)
-                                                and (aridade[1] is None or len(argumentos) <= aridade[1])):
-                    esperado = str(aridade[0]) if aridade[0] == aridade[1] else f"entre {aridade[0]} e {aridade[1] or 'vários'}"
-                    raise ErroSemantico(
-                        f"'{nome}' espera {esperado} argumento(s); recebeu {len(argumentos)}"
-                    )
+                    if aridade is None:
+                        raise ErroSemantico(
+                            f"função '{nome}' não definida; verifique o nome ou declare a função"
+                        )
+                    if not (aridade[0] <= len(argumentos)
+                            and (aridade[1] is None or len(argumentos) <= aridade[1])):
+                        esperado = str(aridade[0]) if aridade[0] == aridade[1] else f"entre {aridade[0]} e {aridade[1] or 'vários'}"
+                        raise ErroSemantico(
+                            f"'{nome}' espera {esperado} argumento(s); recebeu {len(argumentos)}"
+                        )
             else:
                 self._expressao(funcao, contexto)
             for argumento in argumentos:
