@@ -29,6 +29,11 @@ class TestesPermissoesRede(unittest.TestCase):
             with self.subTest(url=url), self.assertRaises(ErroExecucao):
                 permissoes.autorizar_url(url)
 
+    def test_permitir_host_explicitamente(self):
+        permissoes = PermissoesRede()
+        permissoes.permitir_host("api.exemplo.com")
+        self.assertEqual(permissoes.autorizar_url("https://api.exemplo.com/v1"), "api.exemplo.com")
+
     def test_revogar_permissao(self):
         permissoes = PermissoesRede(["exemplo.com"])
         permissoes.revogar_host("exemplo.com")
@@ -52,6 +57,7 @@ class TestesPermissoesRede(unittest.TestCase):
         cliente = ClienteRede(PermissoesRede(["exemplo.com"]))
         with self.assertRaisesRegex(ErroExecucao, "corpo da requisição"):
             cliente.requisitar("https://exemplo.com", metodo="POST", corpo="x" * (1_048_577))
+
     def test_limites_de_configuracao(self):
         with self.assertRaises(ValueError):
             ClienteRede(PermissoesRede(), timeout=100)
