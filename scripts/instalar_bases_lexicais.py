@@ -53,7 +53,7 @@ def baixar_verificado(url: str, sha_esperado: str, destino: Path) -> None:
     with urlopen(requisicao, timeout=90) as resposta:
         conteudo = resposta.read()
     git_blob = hashlib.sha1(
-        f"blob {len(conteudo)}\\0".encode("ascii") + conteudo
+        f"blob {len(conteudo)}\0".encode("ascii") + conteudo
     ).hexdigest()
     if git_blob != sha_esperado:
         raise ValueError(
