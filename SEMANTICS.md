@@ -12,7 +12,7 @@ Uma palavra presente no Lexicon não se torna automaticamente uma instrução v�
 
 `Interpretador` recebe uma instância opcional e compartilhável de `Lexicon`. `InterpretadorSemantico` usa essa instância ou aceita outra explicitamente, oferecendo `analisar_lexico(texto)`.
 
-O resultado contém token, candidatos, pontuação, evidências, seleção e indicador de ambiguidade. A análise não reescreve a fonte, AST ou IR e não executa conteúdo lexical. Se uma palavra tiver vários synsets e o contexto não separar as leituras, todos os sentidos permanecem candidatos e nenhum é escolhido.
+O resultado contém token, candidatos, pontuação, evidências, seleção e indicador de ambiguidade. Exemplos do WordNet ficam ligados ao synset, não apenas ao lema, evitando misturar automaticamente os exemplos de sentidos diferentes de uma palavra polissêmica. A análise não reescreve a fonte, AST ou IR e não executa conteúdo lexical. Se uma palavra tiver vários synsets e o contexto não separar as leituras, todos os sentidos permanecem candidatos e nenhum é escolhido.
 
 ## Estratégia atual
 
@@ -20,7 +20,7 @@ O resultado contém token, candidatos, pontuação, evidências, seleção e ind
 - Consulta por lema e formas registradas.
 - Pistas locais simples de classe gramatical (artigos, alguns advérbios e preposições).
 - Expansão de um lema em candidatos de sentido/synset, mesmo quando há apenas uma entrada lexical.
-- Pontuação por classe gramatical local, palavras da glossa, membros do synset e contextos textuais registrados.
+- Pontuação por classe gramatical local, palavras da glossa, membros do synset, contextos gerais e exemplos vinculados especificamente a cada sentido.
 - Agrupamento de duplicatas de lema/classe entre fontes, mantendo a lista de procedências.
 - Ordenação determinística por pontuação, lema e identificador.
 - Seleção apenas quando há candidato único ou margem mínima suficiente.
