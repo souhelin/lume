@@ -69,7 +69,7 @@ python scripts/instalar_bases_lexicais.py \
   --confirmar-direitos
 ```
 
-O instalador baixa cerca de 70 MB de dados, verifica cada arquivo pelo hash do objeto Git e monta o SQLite local. A rede é usada apenas durante essa execução explícita; depois, consultas e interpretação lexical funcionam offline. O arquivo de avisos de licença é criado ao lado do banco. Em dispositivos com pouca memória, prefira realizar a importação em um computador e transferir o banco pronto.
+O instalador baixa cerca de 80 MB de dados, verifica cada arquivo pelo hash do objeto Git e monta o SQLite local. A rede é usada apenas durante essa execução explícita; depois, consultas e interpretação lexical funcionam offline. O arquivo de avisos de licença é criado ao lado do banco. Em dispositivos com pouca memória, prefira realizar a importação em um computador e transferir o banco pronto.
 
 Para importar OpenWordNet-PT completo:
 
@@ -83,6 +83,20 @@ python scripts/importar_lexicon.py --banco dados/lexicon.sqlite3 \
 ```
 
 A opção `--confirmar-direitos` é um aceite explícito do operador após revisar os avisos de licença; não é uma certificação jurídica automática. Consulte DATA_SOURCES.md e LICENSES.md.
+
+## Integração com programas LUME
+
+A CLI aceita `--lexicon CAMINHO` para carregar um banco SQLite existente ao executar um arquivo ou iniciar o REPL:
+
+```bash
+lume --lexicon dados/lexicon.sqlite3 programa.lume
+```
+
+Com o banco carregado, os programas podem chamar:
+- `consultar_lexico(texto)`: devolve uma lista de lemas, classes, definições e procedência.
+- `analisar_lexico(texto)`: devolve candidatos de sentido, evidências ou uma indicação explícita de ambiguidade.
+
+Essas funções são consultivas e não executam palavras encontradas no banco. Sem banco carregado, retornam erro claro para evitar que a ausência de dados pareça uma consulta vazia válida.
 
 ## Integração semântica
 
