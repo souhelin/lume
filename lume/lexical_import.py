@@ -481,9 +481,11 @@ def importar_openwordnet_ttl(
                 with lexicon._lock, lexicon._db:
                     lexicon._db.executemany(
                         """
-                        INSERT OR IGNORE INTO relacoes
+                        INSERT INTO relacoes
                             (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
                         VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(origem_id, destino_id, tipo, fonte_id) DO UPDATE SET
+                            licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
                         """,
                         relacoes_lote,
                     )
@@ -494,9 +496,11 @@ def importar_openwordnet_ttl(
         with lexicon._lock, lexicon._db:
             lexicon._db.executemany(
                 """
-                INSERT OR IGNORE INTO relacoes
+                INSERT INTO relacoes
                     (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
                 VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(origem_id, destino_id, tipo, fonte_id) DO UPDATE SET
+                    licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
                 """,
                 relacoes_lote,
             )
