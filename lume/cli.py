@@ -15,6 +15,9 @@ from .semantica import InterpretadorSemantico, detectar_sintaxe_semantica
 from .permissoes import PermissoesRede
 
 
+def _avisar_rede(host: str) -> None:
+    print(f"Programa solicitou acesso externo ao host: {host}", file=sys.stderr)
+
 def criar_parser_argumentos() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="lume",
@@ -61,7 +64,7 @@ def executar_arquivo(
     )
     try:
         if usar_semantica:
-            interpretador = InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or []))
+            interpretador = InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede))
             if verificar:
                 interpretador.verificar(fonte)
                 print(f"Semântica válida: {arquivo}")
@@ -131,7 +134,7 @@ def iniciar_repl(modo_semantico: bool | None = None, hosts_rede_permitidos: list
     print(f"Lume {__version__} — ambiente interativo")
     print("Digite uma instrução por linha. Use 'sair' para encerrar.")
     print("Blocos podem ocupar várias linhas e terminam com 'fim'.")
-    interpretador = Interpretador(hosts_rede_permitidos=hosts_rede_permitidos or [])
+    interpretador = Interpretador(hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede)
     interpretador_semantico = InterpretadorSemantico(interpretador)
 
     while True:
@@ -190,11 +193,7 @@ def main(argumentos: list[str] | None = None) -> int:
     if not opcoes.arquivo:
         if opcoes.verificar:
             parser.error("informe um arquivo para usar --verificar")
-        if opcoes.permitir_rede:
-            print("Hosts externos explicitamente autorizados:", ", ".join(opcoes.permitir_rede), file=sys.stderr)
         return iniciar_repl(modo_semantico, opcoes.permitir_rede)
-    if opcoes.permitir_rede:
-        print("Hosts externos explicitamente autorizados:", ", ".join(opcoes.permitir_rede), file=sys.stderr)
     return executar_arquivo(opcoes.arquivo, opcoes.verificar, modo_semantico, opcoes.permitir_rede)
 
 
