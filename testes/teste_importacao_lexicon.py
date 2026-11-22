@@ -104,7 +104,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         )
         synsets.write_text(
             prefixos +
-            'own-pt:synset-0001-n a owns:NounSynset ; owns:synsetId "0001-n" ; owns:gloss "moradia"@pt .\n'
+            'own-pt:synset-0001-n a owns:NounSynset ; owns:synsetId "0001-n" ; owns:gloss "moradia"@pt ; owns:example "Uma casa oferece abrigo"@pt .\n'
             'own-pt:synset-0002-n a owns:NounSynset ; owns:synsetId "0002-n" ; owns:gloss "habitação"@pt .\n',
             encoding="utf-8",
         )
@@ -126,6 +126,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         casa = self.lexicon.buscar("casa")[0].entrada
         self.assertEqual(len(self.lexicon.sentidos(casa.identificador)), 1)
         self.assertIn("moradia", self.lexicon.sentidos(casa.identificador)[0]["definicao"])
+        self.assertIn("Uma casa oferece abrigo", self.lexicon.contextos(casa.identificador))
         self.assertGreater(resultado.relacoes_importadas, 0)
         self.assertEqual(self.lexicon.estatisticas()["relacoes"], 1)
 
