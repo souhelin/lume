@@ -198,7 +198,7 @@ def importar_openwordnet_tsv(
         "s": "adjetivo", "r": "adverbio",
     }
     membros_por_sentido: dict[str, list[str]] = {}
-    entradas: dict[str, tuple[str, str, str | None]] = {}
+    entradas: dict[str, tuple[str, str, str, str | None]] = {}
     lidos = ignorados = 0
     with Path(arquivo_tsv).open("r", encoding="utf-8-sig", newline="") as arquivo:
         for linha in arquivo:
