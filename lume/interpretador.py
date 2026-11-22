@@ -22,6 +22,7 @@ from .nos import (
     ExpressaoInstrucao,
     FuncaoDeclaracao,
     Interromper,
+    Indice,
     Enquanto,
     ListaLiteral,
     Literal,
@@ -194,6 +195,17 @@ class Interpretador:
             funcao = self._avaliar(no.funcao)
             argumentos = [self._avaliar(argumento) for argumento in no.argumentos]
             return self._chamar(funcao, argumentos)
+        if isinstance(no, Indice):
+            colecao = self._avaliar(no.colecao)
+            indice = self._avaliar(no.indice)
+            if not isinstance(colecao, (list, tuple, str)):
+                raise ErroExecucao("o acesso por índice exige uma lista ou um texto")
+            if type(indice) is not int:
+                raise ErroExecucao("o índice precisa ser um número inteiro")
+            try:
+                return colecao[indice]
+            except IndexError as erro:
+                raise ErroExecucao(f"índice {indice} fora dos limites da coleção") from erro
         raise ErroExecucao(f"expressão interna desconhecida: {type(no).__name__}")
 
     def _avaliar_binaria(self, no: Binaria) -> object:
@@ -366,6 +378,53 @@ class Interpretador:
         registrar("arredondar", 1, 2, lambda valor, casas=0: round(valor, casas) if self._numero_valido(valor) and type(casas) is int else self._erro_tipo("'arredondar' exige um número e, opcionalmente, casas inteiras"))
         registrar("maiusculas", 1, 1, lambda valor: valor.upper() if isinstance(valor, str) else self._erro_tipo("'maiusculas' exige um texto"))
         registrar("minusculas", 1, 1, lambda valor: valor.lower() if isinstance(valor, str) else self._erro_tipo("'minusculas' exige um texto"))
+        def validar_lista(valor: object, nome: str) -> list[object]:
+            if not isinstance(valor, list):
+                raise ErroExecucao(f"'{nome}' exige uma lista")
+            return valor
+
+        def adicionar(lista: object, valor: object) -> int:
+            destino = validar_lista(lista, "adicionar")
+            if len(destino) >= self.LIMITE_COLECAO:
+                raise ErroExecucao("a lista atingiu o limite permitido de itens")
+            destino.append(valor)
+            return len(destino)
+
+        def remover(lista: object, indice: object) -> object:
+            destino = validar_lista(lista, "remover")
+            if type(indice) is not int:
+                raise ErroExecucao("o índice de 'remover' precisa ser inteiro")
+            try:
+                return destino.pop(indice)
+            except IndexError as erro:
+                raise ErroExecucao(f"índice {indice} fora dos limites da lista") from erro
+
+        def inserir(lista: object, indice: object, valor: object) -> int:
+            destino = validar_lista(lista, "inserir")
+            if type(indice) is not int:
+                raise ErroExecucao("o índice de 'inserir' precisa ser inteiro")
+            if len(destino) >= self.LIMITE_COLECAO:
+                raise ErroExecucao("a lista atingiu o limite permitido de itens")
+            if indice < -len(destino) or indice > len(destino):
+                raise ErroExecucao(f"índice {indice} fora dos limites da lista")
+            destino.insert(indice, valor)
+            return len(destino)
+
+        def ordenar(lista: object) -> list[object]:
+            origem = validar_lista(lista, "ordenar")
+            try:
+                return sorted(origem)
+            except TypeError as erro:
+                raise ErroExecucao("não é possível ordenar valores de tipos incompatíveis") from erro
+
+        registrar("adicionar", 2, 2, adicionar)
+        registrar("inserir", 3, 3, inserir)
+        registrar("remover", 2, 2, remover)
+        registrar("contem", 2, 2, lambda colecao, valor: valor in colecao if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'contem' exige uma lista ou texto"))
+        registrar("ordenar", 1, 1, ordenar)
+        registrar("inverter", 1, 1, lambda colecao: list(reversed(colecao)) if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'inverter' exige uma lista ou texto"))
+        registrar("juntar", 2, 2, lambda lista, separador: separador.join(lista) if isinstance(lista, (list, tuple)) and isinstance(separador, str) and all(isinstance(item, str) for item in lista) else self._erro_tipo("'juntar' exige uma lista de textos e um separador"))
+
 
     @staticmethod
     def _erro_tipo(mensagem: str) -> object:

@@ -100,3 +100,9 @@ class Interromper:
 @dataclass(slots=True)
 class Continuar:
     pass
+
+
+@dataclass(slots=True)
+class Indice:
+    colecao: object
+    indice: object

@@ -13,6 +13,7 @@ from .nos import (
     ExpressaoInstrucao,
     FuncaoDeclaracao,
     Interromper,
+    Indice,
     Enquanto,
     ListaLiteral,
     Literal,
@@ -213,15 +214,23 @@ class AnalisadorSintatico:
         raise ErroSintatico("esperava um valor, variável ou expressão", token.posicao)
 
     def _posfixa(self, expressao: object) -> object:
-        while self._corresponde("ABRE_PARENTESE"):
-            argumentos: list[object] = []
-            if self._atual().tipo != "FECHA_PARENTESE":
-                while True:
-                    argumentos.append(self._expressao())
-                    if not self._corresponde("VIRGULA"):
-                        break
-            self._consumir_tipo("FECHA_PARENTESE", "esperava ')' depois dos argumentos")
-            expressao = Chamada(expressao, argumentos)
+        while True:
+            if self._corresponde("ABRE_PARENTESE"):
+                argumentos: list[object] = []
+                if self._atual().tipo != "FECHA_PARENTESE":
+                    while True:
+                        argumentos.append(self._expressao())
+                        if not self._corresponde("VIRGULA"):
+                            break
+                self._consumir_tipo("FECHA_PARENTESE", "esperava ')' depois dos argumentos")
+                expressao = Chamada(expressao, argumentos)
+                continue
+            if self._corresponde("ABRE_COLCHETE"):
+                indice = self._expressao()
+                self._consumir_tipo("FECHA_COLCHETE", "esperava ']' depois do índice")
+                expressao = Indice(expressao, indice)
+                continue
+            break
         return expressao
 
     def _operador_binario(self) -> tuple[str, int, int] | None:
