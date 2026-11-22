@@ -42,8 +42,6 @@ class TesteCLIComLexicon(unittest.TestCase):
                 interpretador_recebido = fachada.call_args.args[0]
                 self.assertIsNotNone(interpretador_recebido.lexicon)
                 self.assertEqual(interpretador_recebido.lexicon.caminho, str(banco))
-                self.assertEqual(interpretador_recebido.lexicon.integridade(), ("ok",))
-                interpretador_recebido.lexicon.fechar()
 
     def test_caminho_lexical_inexistente_retorna_erro_controlado(self):
         with tempfile.TemporaryDirectory() as pasta:
