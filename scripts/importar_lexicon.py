@@ -23,6 +23,8 @@ def main() -> int:
     parser.add_argument("--openwordnet-synsets", type=Path)
     parser.add_argument("--openwordnet-palavras-sentido", type=Path)
     parser.add_argument("--openwordnet-relacoes", type=Path)
+    parser.add_argument("--openwordnet-morfosemantico", type=Path)
+    parser.add_argument("--openwordnet-same-as", type=Path)
     parser.add_argument("--versao-openwordnet-ttl", default="master")
     parser.add_argument(
         "--confirmar-direitos", action="store_true",
@@ -31,7 +33,8 @@ def main() -> int:
     args = parser.parse_args()
     if not any((args.fserb_lexico, args.fserb_conjugacoes, args.fserb_verbos, args.fserb_icf, args.openwordnet_tsv,
                 args.openwordnet_palavras, args.openwordnet_synsets,
-                args.openwordnet_palavras_sentido, args.openwordnet_relacoes)):
+                args.openwordnet_palavras_sentido, args.openwordnet_relacoes,
+                args.openwordnet_morfosemantico, args.openwordnet_same_as)):
         parser.error("informe ao menos uma fonte local")
     with Lexicon(args.banco) as lexicon:
         if args.fserb_lexico:
@@ -66,6 +69,8 @@ def main() -> int:
                 parser.error("informe os quatro arquivos Turtle do OpenWordNet")
             print(importar_openwordnet_ttl(
                 lexicon, *ttl, versao=args.versao_openwordnet_ttl,
+                arquivo_morfosemantico=args.openwordnet_morfosemantico,
+                arquivo_same_as=args.openwordnet_same_as,
                 confirmar_direitos=args.confirmar_direitos,
             ))
         print("Estatísticas:", lexicon.estatisticas())
