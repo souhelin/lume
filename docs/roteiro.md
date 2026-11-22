@@ -28,8 +28,8 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [ ] Ampliar a gramática semântica com corpus de compatibilidade e especificação formal por padrão.
 - [x] Posições de linha e coluna preservadas em instruções da AST, IR, erros semânticos e erros de execução.
 - [ ] Inferência de tipos e fluxo de controle mais completos.
-- [ ] Biblioteca padrão organizada em módulos internos.
-- [ ] Testes de recuperação e edição incremental no REPL.
+- [x] Biblioteca padrão separada do executor em módulo interno dedicado.
+- [x] Testes de recuperação de erros e conclusão de blocos multilinha no REPL.
 
 ## 0.3.0 — Programas maiores
 

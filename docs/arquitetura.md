@@ -50,6 +50,7 @@ A camada semântica não cria código Python e não chama eval ou exec. O vocabu
 ~~~text
 lume/
   ambiente.py       ambientes e variáveis
+  biblioteca.py     funções nativas e biblioteca padrão
   cli.py            interface de terminal e seleção do front-end
   erros.py          erros e sinais de controle
   interpretador.py  execução da AST e biblioteca padrão
@@ -73,3 +74,8 @@ O front-end natural é um conjunto explícito de padrões, não um analisador de
 ## Diagnósticos e posição de origem
 
 O parser associa a posição inicial de cada instrução à AST. A conversão para IR preserva a posição, e o executor anexa essa posição a erros de execução que ainda não possuem uma localização mais específica. Erros semânticos são associados à instrução validada. A CLI apresenta arquivo, linha, coluna e uma indicação visual do ponto de origem.
+
+
+## Biblioteca padrão
+
+As funções nativas ficam registradas em biblioteca.py e recebem explicitamente a instância do interpretador. O interpretador mantém a avaliação de expressões e o controle de execução; o módulo da biblioteca concentra conversões, coleções, textos, entrada/saída e operações de arquivos. Essa separação evita acoplar a implementação das funções nativas ao parser ou à gramática.
