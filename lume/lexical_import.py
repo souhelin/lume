@@ -68,9 +68,14 @@ def _gravar_entradas(
         ).fetchone()
         lexicon._db.executemany(
             """
-            INSERT OR IGNORE INTO entradas
+            INSERT INTO entradas
                 (id, lema, lema_normalizado, classe, definicao, fonte_id, licenca, versao_fonte)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                lema=excluded.lema, lema_normalizado=excluded.lema_normalizado,
+                classe=excluded.classe, definicao=excluded.definicao,
+                fonte_id=excluded.fonte_id, licenca=excluded.licenca,
+                versao_fonte=excluded.versao_fonte
             """,
             (
                 (
@@ -251,6 +256,10 @@ def importar_openwordnet_tsv(
                 for synset in membros_por_sentido
             ),
         )
+        for synset in membros_por_sentido:
+            lexicon._db.execute(
+                "DELETE FROM sentido_entradas WHERE sentido_id=?", (synset,)
+            )
         lexicon._db.executemany(
             """
             INSERT OR IGNORE INTO sentido_entradas(sentido_id, entrada_id, ordem)
