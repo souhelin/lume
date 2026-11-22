@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
+
+if TYPE_CHECKING:
+    from .lexicon import CorrespondenciaLexical, Lexicon
 
 from .ambiente import Ambiente
 from .erros import (
@@ -70,6 +73,7 @@ class Interpretador:
         diretorio_raiz: str | Path | None = None,
         hosts_rede_permitidos: tuple[str, ...] | list[str] = (),
         aviso_rede: Callable[[str], None] | None = None,
+        lexicon: "Lexicon | None" = None,
     ) -> None:
         self.saida = saida or print
         self.entrada = entrada or input
@@ -78,6 +82,9 @@ class Interpretador:
         from .permissoes import PermissoesRede
         self.permissoes_rede = PermissoesRede(hosts_rede_permitidos)
         self.aviso_rede = aviso_rede
+        # O hospedeiro pode injetar uma única instância compartilhada do Lexicon.
+        # Nenhum banco ou arquivo de dados é aberto implicitamente.
+        self.lexicon = lexicon
         self._cliente_rede = None
         self._modulos_carregados: set[Path] = set()
         self._modulos_em_carga: set[Path] = set()
@@ -86,6 +93,12 @@ class Interpretador:
         self.ambiente = Ambiente()
         from .biblioteca import registrar_biblioteca
         registrar_biblioteca(self)
+
+    def consultar_lexico(self, termo: str) -> tuple["CorrespondenciaLexical", ...]:
+        """Consulta o Lexicon injetado sem recorrer à rede."""
+        if self.lexicon is None:
+            return ()
+        return self.lexicon.buscar(termo)
 
     def executar(self, programa: Programa) -> None:
         self.passos = 0
