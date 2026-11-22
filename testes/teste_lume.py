@@ -201,7 +201,10 @@ class TestesLume(unittest.TestCase):
 
     def test_tratamento_estruturado_de_erro(self) -> None:
         fonte = 'tente\n lance "falha controlada"\ncapture erro\n mostrar erro\nfim'
-        self.assertEqual(self.executar(fonte), ["Erro de execução: falha controlada"])
+        saidas = self.executar(fonte)
+        self.assertEqual(len(saidas), 1)
+        self.assertIn("falha controlada", saidas[0])
+        self.assertIn("linha 2", saidas[0])
 
     def test_finalmente_e_executado_apos_erro(self) -> None:
         fonte = 'tente\n lance "falha"\nfinalmente\n mostrar "finalizado"\nfim'
