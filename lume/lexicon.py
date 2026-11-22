@@ -401,8 +401,14 @@ class Lexicon:
                 ),
             )
             self._db.execute("DELETE FROM formas WHERE entrada_id=?", (entrada.identificador,))
-            self._db.execute("DELETE FROM relacoes WHERE origem_id=?", (entrada.identificador,))
-            self._db.execute("DELETE FROM contextos WHERE entrada_id=?", (entrada.identificador,))
+            self._db.execute(
+                "DELETE FROM relacoes WHERE origem_id=? AND fonte_id=?",
+                (entrada.identificador, entrada.fonte),
+            )
+            self._db.execute(
+                "DELETE FROM contextos WHERE entrada_id=? AND fonte_id=?",
+                (entrada.identificador, entrada.fonte),
+            )
             formas_validas = [(entrada.lema, "lema"), *list(formas)]
             for forma, tipo in formas_validas:
                 if not forma.strip() or not tipo.strip():
