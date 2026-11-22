@@ -45,12 +45,17 @@ def main() -> int:
             raise SystemExit("nenhuma glossa foi associada ao lema 'entidade'")
         desambiguador = DesambiguadorContextual(lexicon)
         banco_isolado = desambiguador.analisar("banco")
-        if banco_isolado and len(banco_isolado[0].candidatos) > 1:
-            if not banco_isolado[0].ambiguo:
-                raise SystemExit("a polissemia de 'banco' não foi preservada sem contexto")
+        if not banco_isolado:
+            raise SystemExit("o lema polissêmico 'banco' não foi importado")
+        if len(banco_isolado[0].candidatos) > 1 and not banco_isolado[0].ambiguo:
+            raise SystemExit("a polissemia de 'banco' não foi preservada sem contexto")
         banco_contextual = desambiguador.analisar("banco dinheiro")
-        if banco_contextual and banco_contextual[0].selecionado is None:
-            raise SystemExit("o contexto 'banco dinheiro' não resolveu um sentido evidente")
+        if (
+            not banco_contextual
+            or banco_contextual[0].selecionado is None
+            or "dinheiro" not in (banco_contextual[0].selecionado.definicao or "").casefold()
+        ):
+            raise SystemExit("o contexto 'banco dinheiro' não resolveu o sentido financeiro")
         print("Base real OpenWordNet-PT e desambiguação validadas:", resultado)
         print("Estatísticas:", stats)
     return 0
