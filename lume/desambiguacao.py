@@ -96,6 +96,12 @@ class DesambiguadorContextual:
             for contexto in self.lexicon.contextos(origem.entrada.identificador)
             for token_contexto in self._tokens(contexto)
         }
+        if identificador_sentido is not None:
+            contextos.update(
+                token_contexto
+                for contexto in self.lexicon.contextos_do_sentido(identificador_sentido)
+                for token_contexto in self._tokens(contexto)
+            )
         sobreposicao_contexto = contextos & janela
         if sobreposicao_contexto:
             pontos += min(2.0, 0.75 * len(sobreposicao_contexto))
