@@ -86,9 +86,14 @@ def aplicar_pacote_assinado(
     backup = caminho.with_suffix(caminho.suffix + ".bak")
     anterior_backup = caminho.with_suffix(caminho.suffix + ".bak.previous")
     try:
-        with sqlite3.connect(caminho) as origem, sqlite3.connect(stage) as destino:
+        origem = sqlite3.connect(caminho)
+        destino = sqlite3.connect(stage)
+        try:
             origem.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             origem.backup(destino)
+        finally:
+            destino.close()
+            origem.close()
 
         lexicon = Lexicon(stage)
         try:
@@ -140,9 +145,12 @@ def aplicar_pacote_assinado(
         finally:
             lexicon.fechar()
 
-        with sqlite3.connect(stage) as conexao:
+        conexao = sqlite3.connect(stage)
+        try:
             conexao.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             conexao.execute("PRAGMA journal_mode=DELETE")
+        finally:
+            conexao.close()
 
         if backup.exists():
             shutil.copy2(backup, anterior_backup)
