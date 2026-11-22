@@ -448,7 +448,7 @@ def importar_openwordnet_ttl(
             if entrada_id and entrada_id not in membros_por_uri[uri]:
                 membros_por_uri[uri].append(entrada_id)
 
-    relacoes_lote: list[tuple[str, str, str, str]] = []
+    relacoes_lote: list[tuple[str, str, str, str, str, str]] = []
     total_relacoes = 0
     arquivos_relacionais = (arquivo_relacoes, arquivo_morfosemantico, arquivo_same_as)
     for arquivo_relacional in arquivos_relacionais:
@@ -494,8 +494,9 @@ def importar_openwordnet_ttl(
         with lexicon._lock, lexicon._db:
             lexicon._db.executemany(
                 """
-                INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
-                VALUES (?, ?, ?, ?)
+                INSERT OR IGNORE INTO relacoes
+                    (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
+                VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 relacoes_lote,
             )
