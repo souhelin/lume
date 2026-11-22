@@ -11,6 +11,7 @@ class CandidatoSentido:
     correspondencia: CorrespondenciaLexical
     pontuacao: float
     evidencias: tuple[str, ...]
+    fontes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,8 +55,17 @@ class DesambiguadorContextual:
             if not correspondencias:
                 continue
             esperada = self._classe_esperada(tokens, indice)
-            candidatos: list[CandidatoSentido] = []
+            grupos: dict[tuple[str, str], list[CorrespondenciaLexical]] = {}
             for correspondencia in correspondencias:
+                chave_grupo = (
+                    normalizar_forma(correspondencia.entrada.lema),
+                    normalizar_forma(correspondencia.entrada.classe_gramatical),
+                )
+                grupos.setdefault(chave_grupo, []).append(correspondencia)
+            candidatos: list[CandidatoSentido] = []
+            for grupo in grupos.values():
+                grupo.sort(key=lambda c: (c.entrada.fonte, c.entrada.identificador))
+                correspondencia = grupo[0]
                 classe = normalizar_forma(correspondencia.entrada.classe_gramatical)
                 pontos = 0.0
                 evidencias: list[str] = []
@@ -66,15 +76,19 @@ class DesambiguadorContextual:
                     pontos -= 1.0
                     evidencias.append(f"classe não corresponde à pista {esperada}")
                 contextos = {
-                    normalizar_forma(c)
-                    for c in self.lexicon.contextos(correspondencia.entrada.identificador)
+                    normalizar_forma(contexto)
+                    for origem in grupo
+                    for contexto in self.lexicon.contextos(origem.entrada.identificador)
                 }
                 janela = set(tokens[max(0, indice - 3):indice] + tokens[indice + 1:indice + 4])
                 sobreposicao = contextos & janela
                 if sobreposicao:
                     pontos += min(2.0, 0.75 * len(sobreposicao))
                     evidencias.append("contexto lexical compartilhado: " + ", ".join(sorted(sobreposicao)))
-                candidatos.append(CandidatoSentido(correspondencia, pontos, tuple(evidencias)))
+                fontes = tuple(sorted({origem.entrada.fonte for origem in grupo}))
+                candidatos.append(
+                    CandidatoSentido(correspondencia, pontos, tuple(evidencias), fontes)
+                )
             candidatos.sort(
                 key=lambda c: (
                     -c.pontuacao,
