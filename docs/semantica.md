@@ -239,3 +239,6 @@ A validação semântica verifica se o destino de atribuição por índice é um
 ## Módulos e arquivos
 
 As instruções estruturadas importar "apoio.lume" e as funções ler_arquivo, escrever_arquivo, anexar_arquivo e existe_arquivo também estão disponíveis no front-end semântico. A validação verifica os nomes e a quantidade de argumentos; a existência, permissões e conteúdo dos arquivos são verificados em execução.
+
+
+A validação feita por InterpretadorSemantico também resolve módulos locais declarados no início do arquivo. O verificador lê e analisa os módulos sem executar seus efeitos; os módulos continuam sendo executados no ponto da instrução importar durante a execução real.

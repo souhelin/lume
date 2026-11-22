@@ -7,10 +7,10 @@ import re
 import unicodedata
 from typing import Any
 
-from .erros import ErroAmbiguidade, ErroSemantico
+from .erros import ErroAmbiguidade, ErroExecucao, ErroLume, ErroSemantico, Posicao
 from .lexer import analisar_lexico
 from .nos import (
-    Atribuir, AtribuirIndice, Tentar, Lancar, Binaria, Chamada, Condicional, Continuar, Definir,
+    Atribuir, AtribuirIndice, Tentar, Lancar, Importar, Binaria, Chamada, Condicional, Continuar, Definir,
     ExpressaoInstrucao, FuncaoDeclaracao, Indice, Interromper, Enquanto,
     ListaLiteral, Literal, Mostrar, ParaCada, Programa, Retornar, Unaria,
     Variavel,
@@ -726,9 +726,100 @@ class InterpretadorSemantico:
                 self.compilador.contexto.variaveis.add(nome)
                 self.compilador.contexto.tipos[nome] = type(valor)
 
+    @staticmethod
+    def _tem_importacao_aninhada(instrucao: object) -> bool:
+        if isinstance(instrucao, Condicional):
+            blocos = (instrucao.caminho_verdadeiro, instrucao.caminho_falso)
+        elif isinstance(instrucao, (Enquanto, FuncaoDeclaracao)):
+            blocos = (instrucao.corpo,)
+        elif isinstance(instrucao, ParaCada):
+            blocos = (instrucao.corpo,)
+        elif isinstance(instrucao, Tentar):
+            blocos = (instrucao.corpo, instrucao.captura, instrucao.finalmente)
+        else:
+            return False
+        for bloco in blocos:
+            for item in bloco:
+                if isinstance(item, Importar) or InterpretadorSemantico._tem_importacao_aninhada(item):
+                    return True
+        return False
+
+    def _validar_importacoes(
+        self,
+        programa: Programa,
+        contexto: ContextoSemantico,
+        carregando: set[object],
+        carregados: set[object],
+    ) -> ContextoSemantico:
+        importacoes: list[Importar] = []
+        iniciou_codigo = False
+        for instrucao in programa.declaracoes:
+            if isinstance(instrucao, Importar):
+                if iniciou_codigo:
+                    raise ErroSemantico(
+                        "as importações devem aparecer no início do arquivo, antes das demais instruções",
+                        getattr(instrucao, "posicao", None),
+                    )
+                importacoes.append(instrucao)
+            else:
+                iniciou_codigo = True
+                if self._tem_importacao_aninhada(instrucao):
+                    raise ErroSemantico(
+                        "importe módulos no início do arquivo, fora de condições, laços ou funções",
+                        getattr(instrucao, "posicao", None),
+                    )
+        resultado = contexto.copiar()
+        for importacao in importacoes:
+            resultado = self._validar_modulo(
+                importacao.caminho, resultado, carregando, carregados
+            )
+        return resultado
+
+    def _validar_modulo(
+        self,
+        caminho: str,
+        contexto: ContextoSemantico,
+        carregando: set[object],
+        carregados: set[object],
+    ) -> ContextoSemantico:
+        try:
+            arquivo = self.interpretador._resolver_caminho(caminho)
+            if arquivo.suffix.casefold() != ".lume":
+                raise ErroSemantico("módulos precisam usar a extensão .lume")
+            if arquivo in carregados:
+                return contexto
+            if arquivo in carregando:
+                raise ErroSemantico(f"ciclo de importação detectado no módulo '{caminho}'")
+            fonte = self.interpretador._ler_arquivo(caminho)
+        except ErroExecucao as erro:
+            raise ErroSemantico(erro.mensagem, erro.posicao) from erro
+
+        carregando.add(arquivo)
+        try:
+            contexto_modulo = contexto.copiar()
+            tradutor = TradutorSemantico(self.compilador.dicionario)
+            fonte_normalizada = tradutor.traduzir(fonte, contexto_modulo)
+            arvore = analisar_sintaxe(fonte_normalizada)
+            contexto_modulo = self._validar_importacoes(
+                arvore, contexto_modulo, carregando, carregados
+            )
+            representacao = programa_para_ir(arvore)
+            contexto_resultante = _Validador(contexto_modulo).validar(representacao)
+            carregados.add(arquivo)
+            return contexto_resultante
+        finally:
+            carregando.discard(arquivo)
+
     def verificar(self, fonte: str) -> ResultadoCompilacao:
         self._sincronizar_contexto()
-        return self.compilador.compilar(fonte)
+        contexto = self.compilador.contexto.copiar()
+        tradutor = TradutorSemantico(self.compilador.dicionario)
+        fonte_normalizada = tradutor.traduzir(fonte, contexto)
+        arvore = analisar_sintaxe(fonte_normalizada)
+        contexto = self._validar_importacoes(arvore, contexto, set(), set())
+        representacao = programa_para_ir(arvore)
+        contexto_resultante = _Validador(contexto).validar(representacao)
+        return ResultadoCompilacao(representacao, fonte_normalizada, contexto_resultante)
 
     def executar(self, fonte: str) -> ProgramaIR:
         resultado = self.verificar(fonte)

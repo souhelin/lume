@@ -254,6 +254,20 @@ class TestesLume(unittest.TestCase):
             ))
             self.assertEqual(saidas, ["Olá", "verdadeiro", "Olá!"])
 
+    def test_leitura_rejeita_arquivo_acima_do_limite(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            Path(diretorio, "grande.txt").write_bytes(b"x" * 1_048_577)
+            interpretador = Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            with self.assertRaisesRegex(ErroExecucao, "limite de leitura"):
+                interpretador.executar(analisar_sintaxe('mostrar ler_arquivo("grande.txt")'))
+
+    def test_importacao_rejeita_modulo_acima_do_limite(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            Path(diretorio, "grande.lume").write_bytes(b"#" + b"x" * 1_048_576)
+            interpretador = Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            with self.assertRaisesRegex(ErroExecucao, "ultrapassa o limite"):
+                interpretador.executar(analisar_sintaxe('importar "grande.lume"'))
+
     def test_escrita_rejeita_travessia_de_diretorio(self) -> None:
         with tempfile.TemporaryDirectory() as diretorio:
             interpretador = Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)

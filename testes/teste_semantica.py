@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
 
 from lume.erros import ErroAmbiguidade, ErroSemantico
 from lume.interpretador import Interpretador
@@ -255,6 +257,21 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         compilador = CompiladorSemantico()
         resultado = compilador.compilar('importar "apoio.lume"')
         self.assertEqual(resultado.programa.instrucoes[0].operacao, "importar_modulo")
+
+    def test_contexto_semantico_inclui_variaveis_de_modulo(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            Path(diretorio, "dados.lume").write_text(
+                "crie uma variável chamada idade com valor 18\n", encoding="utf-8"
+            )
+            interpretador = InterpretadorSemantico(
+                Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            )
+            resultado = interpretador.verificar(
+                'importar "dados.lume"\natribua 20 a ela\nmostre idade'
+            )
+        self.assertIn("idade", resultado.contexto_resultante.variaveis)
+        self.assertEqual(resultado.contexto_resultante.ultima_variavel, "idade")
+
 
     def test_atribuicao_a_nome_inexistente_e_rejeitada(self) -> None:
         compilador = CompiladorSemantico()

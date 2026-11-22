@@ -53,3 +53,11 @@ Depois de estabilizar a semântica, avaliar bytecode ou uma implementação nati
 
 
 A versão 0.3.0 reúne os recursos marcados como concluídos nesta etapa. A matriz de CI cobre os três sistemas operacionais e quatro versões do Python; a publicação de artefatos e a verificação em ambientes realmente limpos ainda precisam de uma etapa de lançamento.
+
+
+## Verificação estática e segurança (0.3.x)
+
+- [x] Verificação sem execução para programas tradicionais e semânticos.
+- [x] Resolução estática de símbolos em módulos locais, incluindo ciclos e dependências.
+- [x] Limite de leitura aplicado antes de acumular arquivos grandes em memória.
+- [x] Especificação de referência, política de compatibilidade, modelo de segurança e benchmark informativo.

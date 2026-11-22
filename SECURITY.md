@@ -12,3 +12,6 @@ A Lume ainda está em fase alfa. O interpretador possui limites defensivos, mas 
 ## Relato de vulnerabilidades
 
 Não publique detalhes exploráveis de uma vulnerabilidade ainda não corrigida em uma issue pública. Use a opção **Report a vulnerability** na aba Security do GitHub, caso esteja habilitada para o repositório. Se ela não estiver disponível, entre em contato com os mantenedores por um canal privado antes de divulgar os detalhes.
+
+
+Para os limites técnicos atuais e o modelo de ameaças, consulte [docs/seguranca.md](docs/seguranca.md). A documentação de segurança não transforma o interpretador em uma sandbox; não execute código não confiável sem isolamento do sistema operacional.

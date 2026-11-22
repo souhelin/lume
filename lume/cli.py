@@ -11,7 +11,7 @@ from .erros import ErroLume
 from .interpretador import Interpretador
 from .formatador import formatar_fonte
 from .parser import analisar_sintaxe
-from .semantica import CompiladorSemantico, InterpretadorSemantico, detectar_sintaxe_semantica
+from .semantica import InterpretadorSemantico, detectar_sintaxe_semantica
 
 
 def criar_parser_argumentos() -> argparse.ArgumentParser:
@@ -68,7 +68,8 @@ def executar_arquivo(
 
         programa = analisar_sintaxe(fonte)
         if verificar:
-            print(f"Sintaxe válida: {arquivo}")
+            InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent)).verificar(fonte)
+            print(f"Programa válido: {arquivo}")
             return 0
         Interpretador(diretorio_raiz=arquivo.parent).executar(programa)
         return 0
@@ -81,11 +82,10 @@ def formatar_arquivo(caminho: str, gravar: bool = False) -> int:
     arquivo = Path(caminho)
     try:
         fonte = arquivo.read_text(encoding="utf-8")
-        usar_semantica = detectar_sintaxe_semantica(fonte)
-        if usar_semantica:
-            fonte = CompiladorSemantico().compilar(fonte).fonte_normalizada
-        else:
-            analisar_sintaxe(fonte)
+        interpretador = InterpretadorSemantico(
+            Interpretador(diretorio_raiz=arquivo.parent)
+        )
+        fonte = interpretador.verificar(fonte).fonte_normalizada
         resultado = formatar_fonte(fonte)
         if gravar:
             arquivo.write_text(resultado, encoding="utf-8", newline="\n")

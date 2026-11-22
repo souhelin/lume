@@ -33,7 +33,7 @@ class TestesCLI(unittest.TestCase):
     def test_verificar_arquivo(self) -> None:
         resultado = self.executar_cli("--verificar", "exemplos/ola.lume")
         self.assertEqual(resultado.returncode, 0)
-        self.assertIn("Sintaxe válida", resultado.stdout)
+        self.assertIn("Programa válido", resultado.stdout)
 
     def test_executar_arquivo(self) -> None:
         resultado = self.executar_cli("exemplos/ola.lume")
@@ -62,6 +62,15 @@ class TestesCLI(unittest.TestCase):
         self.assertEqual(resultado.returncode, 0, resultado.stderr)
         self.assertIn("Semântica válida", resultado.stdout)
 
+    def test_verificar_modo_tradicional_detecta_nome_nao_definido(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            arquivo = self.arquivo_temporario(
+                diretorio, "principal.lume", "mostrar ausente\n"
+            )
+            resultado = self.executar_cli("--tradicional", "--verificar", str(arquivo))
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn("não definido", resultado.stderr)
+
     def test_modo_semantico_rejeita_referencia_inexistente(self) -> None:
         with tempfile.TemporaryDirectory() as diretorio:
             arquivo = self.arquivo_temporario(
@@ -70,6 +79,51 @@ class TestesCLI(unittest.TestCase):
             resultado = self.executar_cli("--semantico", "--verificar", str(arquivo))
         self.assertEqual(resultado.returncode, 1)
         self.assertIn("não definido", resultado.stderr)
+
+    def test_verificar_importacao_resolve_simbolos_do_modulo(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            raiz = Path(diretorio)
+            (raiz / "apoio.lume").write_text(
+                'definir mensagem como "módulo"\n', encoding="utf-8"
+            )
+            principal = raiz / "principal.lume"
+            principal.write_text(
+                'importar "apoio.lume"\nmostrar mensagem\n', encoding="utf-8"
+            )
+            resultado = self.executar_cli("--verificar", str(principal))
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+        self.assertIn("Programa válido", resultado.stdout)
+
+    def test_verificar_detecta_ciclo_de_modulos(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            raiz = Path(diretorio)
+            (raiz / "a.lume").write_text('importar "b.lume"\n', encoding="utf-8")
+            (raiz / "b.lume").write_text('importar "a.lume"\n', encoding="utf-8")
+            principal = raiz / "principal.lume"
+            principal.write_text('importar "a.lume"\n', encoding="utf-8")
+            resultado = self.executar_cli("--verificar", str(principal))
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn("ciclo de importação", resultado.stderr)
+
+    def test_verificar_rejeita_modulo_ausente(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            principal = self.arquivo_temporario(
+                diretorio, "principal.lume", 'importar "ausente.lume"\nmostrar 1\n'
+            )
+            resultado = self.executar_cli("--verificar", str(principal))
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn("módulo não encontrado", resultado.stderr)
+
+    def test_verificar_rejeita_importacao_depois_do_codigo(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            self.arquivo_temporario(diretorio, "apoio.lume", 'mostrar "ok"\n')
+            principal = self.arquivo_temporario(
+                diretorio, "principal.lume",
+                'mostrar "antes"\nimportar "apoio.lume"\n'
+            )
+            resultado = self.executar_cli("--verificar", str(principal))
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn("importações devem aparecer no início", resultado.stderr)
 
     def test_cli_importa_modulo_relativo_ao_programa(self) -> None:
         with tempfile.TemporaryDirectory() as diretorio:
