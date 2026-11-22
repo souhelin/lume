@@ -42,3 +42,9 @@
 - Formatador determinístico de indentação.
 - CI expandido para Linux, macOS e Windows com Python 3.10–3.13.
 - Construção de wheel validada na integração contínua.
+
+
+## 0.3.0 — Organização interna
+
+- Biblioteca padrão extraída para módulo dedicado, sem alterar as assinaturas das funções nativas.
+- Testes de REPL para blocos multilinha, erros léxicos e tratamento semântico.

@@ -127,7 +127,7 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 - Repetições `enquanto` e `para cada`.
 - Funções, parâmetros, retorno e recursão.
 - Entrada por `perguntar(...)` e saída por `mostrar` ou `exibir`.
-- Funções nativas para conversões, listas, intervalos e textos, incluindo adicionar, inserir, remover, ordenar, inverter, verificar presença e juntar textos.
+- Biblioteca padrão modularizada para conversões, listas, intervalos, textos, entrada e saída de arquivos.
 - Limite padrão de 100.000 etapas por execução, até 100.000 itens por coleção e limites para operações numéricas.
 - Mensagens de erro em português e verificação de sintaxe pela CLI, atribuição por índice e tratamento estruturado de erros.
 
@@ -262,3 +262,6 @@ lume --formatar --gravar programa.lume
 ~~~
 
 Sem --gravar, o resultado vai para a saída padrão e o arquivo original permanece intacto. O formatador normaliza recuo e espaços externos; não reescreve expressões nem aplica um estilo de pontuação.
+
+
+A biblioteca padrão está isolada em lume/biblioteca.py, separada do núcleo de avaliação e execução.
