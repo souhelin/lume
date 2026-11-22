@@ -17,7 +17,7 @@ def main() -> int:
     with Lexicon(":memory:") as lexicon:
         resultado = importar_openwordnet_ttl(
             lexicon, a.palavras, a.synsets, a.palavras_sentido, a.relacoes,
-            versao="own-pt:master", confirmar_direitos=True,
+            versao="own-pt:264016d5899e6969f6f7cb4f1d75fa06037c1fd7", confirmar_direitos=True,
         )
         stats = lexicon.estatisticas()
         if resultado.registros_importados < a.min_entradas:
@@ -28,16 +28,16 @@ def main() -> int:
             raise SystemExit("nenhuma relação semântica foi importada")
         if lexicon.integridade() != ("ok",):
             raise SystemExit("falha de integridade SQLite")
-        respirar = lexicon.buscar("respirar")
-        if not respirar:
-            raise SystemExit("consulta real 'respirar' não retornou resultado")
+        entidade = lexicon.buscar("entidade")
+        if not entidade:
+            raise SystemExit("consulta real 'entidade' não retornou resultado")
         glossas = [
-            sentido for correspondencia in respirar
+            sentido for correspondencia in entidade
             for sentido in lexicon.sentidos(correspondencia.entrada.identificador)
             if sentido.get("definicao")
         ]
         if not glossas:
-            raise SystemExit("nenhuma glossa foi associada ao lema 'respirar'")
+            raise SystemExit("nenhuma glossa foi associada ao lema 'entidade'")
         print("Base real OpenWordNet-PT validada:", resultado)
         print("Estatísticas:", stats)
     return 0
