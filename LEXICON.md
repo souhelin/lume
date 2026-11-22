@@ -27,7 +27,7 @@ Os importadores recebem arquivos locais e não fazem downloads:
 - `importar_fserb_conjugacoes`: lista de formas verbais. O arquivo não fornece o vínculo forma→infinitivo; portanto, as formas são armazenadas como `forma_verbal_sem_lema`, sem inventar uma análise morfológica.
 - `importar_fserb_verbos`: lista de infinitivos/verbos como lemas de classe verbal.
 - `importar_fserb_icf`: pontuações ICF em tabela própria, sem confundi-las com definições lexicais.
-- `importar_openwordnet_ttl`: importa os quatro arquivos Turtle do projeto original OpenWordNet-PT: palavras, synsets, palavras-sentido e relações. Preserva POS, glossas, synsets e relações.
+- `importar_openwordnet_ttl`: importa palavras, synsets, palavras-sentido e relações; aceita também os arquivos de relações morfossêmicas e same-as. Preserva POS, glossas, synsets e relações semânticas.
 - `importar_openwordnet_tsv`: aceita a exportação tabular OMW separada; ela contém lemas/synsets, mas não substitui o conjunto Turtle completo.
 
 Exemplo de API:
@@ -59,6 +59,17 @@ python scripts/importar_lexicon.py --banco dados/lexicon.sqlite3 \
   --fserb-icf dados/icf \
   --confirmar-direitos
 ```
+
+Para criar o banco completo a partir de snapshots fixados e checksums Git, use o instalador de primeira configuração:
+
+```bash
+python -m pip install '.[rdf,updates]'
+python scripts/instalar_bases_lexicais.py \
+  --destino dados/lexicon.sqlite3 \
+  --confirmar-direitos
+```
+
+O instalador baixa cerca de 70 MB de dados, verifica cada arquivo pelo hash do objeto Git e monta o SQLite local. A rede é usada apenas durante essa execução explícita; depois, consultas e interpretação lexical funcionam offline. O arquivo de avisos de licença é criado ao lado do banco. Em dispositivos com pouca memória, prefira realizar a importação em um computador e transferir o banco pronto.
 
 Para importar OpenWordNet-PT completo:
 
@@ -93,7 +104,7 @@ python benchmarks/benchmark_lexicon.py --iteracoes 5000
 python benchmarks/benchmark_lexicon.py --banco dados/lexicon.sqlite3 --iteracoes 20000
 ```
 
-A CI também executa um teste de integração que baixa os quatro arquivos públicos do OpenWordNet-PT e importa a base real. Isso valida a integração sem redistribuir os dados no pacote de código.
+A CI também executa testes de integração com os seis arquivos Turtle do OpenWordNet-PT e com o snapshot completo fserb/pt-br. Isso valida a integração sem redistribuir os dados no pacote de código.
 
 ## Limites conhecidos
 
