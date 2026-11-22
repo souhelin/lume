@@ -23,7 +23,8 @@ def normalizar_forma(texto: str) -> str:
     """Normaliza Unicode e caixa sem remover diacríticos."""
     if not isinstance(texto, str):
         raise TypeError("a forma lexical precisa ser texto")
-    return " ".join(unicodedata.normalize("NFC", texto).casefold().split())
+    caixa_normalizada = unicodedata.normalize("NFC", texto).casefold()
+    return " ".join(unicodedata.normalize("NFC", caixa_normalizada).split())
 
 
 @dataclass(frozen=True, slots=True)
