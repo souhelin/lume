@@ -55,7 +55,7 @@ def executar_arquivo(
     )
     try:
         if usar_semantica:
-            interpretador = InterpretadorSemantico()
+            interpretador = InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent))
             if verificar:
                 interpretador.verificar(fonte)
                 print(f"Semântica válida: {arquivo}")
@@ -67,7 +67,7 @@ def executar_arquivo(
         if verificar:
             print(f"Sintaxe válida: {arquivo}")
             return 0
-        Interpretador().executar(programa)
+        Interpretador(diretorio_raiz=arquivo.parent).executar(programa)
         return 0
     except ErroLume as erro:
         _mostrar_erro(arquivo, fonte, erro)

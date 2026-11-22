@@ -6,6 +6,7 @@ from .erros import ErroSintatico
 from .lexer import analisar_lexico
 from .nos import (
     Atribuir,
+    Importar,
     AtribuirIndice,
     Tentar,
     Lancar,
@@ -89,6 +90,10 @@ class AnalisadorSintatico:
             return self._condicional()
         if palavra == "tente":
             return self._tentar()
+        if palavra == "importar":
+            self._avancar()
+            caminho = self._consumir_tipo("TEXTO", "esperava o caminho do módulo entre aspas")
+            return Importar(str(caminho.valor))
         if palavra == "lance":
             self._avancar()
             return Lancar(self._expressao())

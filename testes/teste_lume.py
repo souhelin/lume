@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
 
 from lume.erros import ErroExecucao, ErroLexico, ErroSintatico
 from lume.interpretador import Interpretador
@@ -202,6 +204,53 @@ class TestesLume(unittest.TestCase):
     def test_finalmente_e_executado_apos_captura(self) -> None:
         fonte = 'tente\n lance "falha"\ncapture erro\n mostrar "capturado"\nfinalmente\n mostrar "finalizado"\nfim'
         self.assertEqual(self.executar(fonte), ["capturado", "finalizado"])
+
+    def test_importa_modulo_local(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            Path(diretorio, "apoio.lume").write_text(
+                'definir taxa como 7\n', encoding="utf-8"
+            )
+            saidas: list[str] = []
+            interpretador = Interpretador(saida=saidas.append, diretorio_raiz=diretorio)
+            interpretador.executar(analisar_sintaxe(
+                'importar "apoio.lume"\nmostrar taxa'
+            ))
+            self.assertEqual(saidas, ["7"])
+
+    def test_importacao_detecta_ciclo(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            Path(diretorio, "a.lume").write_text('importar "b.lume"\n', encoding="utf-8")
+            Path(diretorio, "b.lume").write_text('importar "a.lume"\n', encoding="utf-8")
+            interpretador = Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            with self.assertRaisesRegex(ErroExecucao, "ciclo de importação"):
+                interpretador.executar(analisar_sintaxe('importar "a.lume"'))
+
+    def test_importacao_rejeita_travessia_de_diretorio(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            interpretador = Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            with self.assertRaisesRegex(ErroExecucao, "dentro do diretório"):
+                interpretador.executar(analisar_sintaxe('importar "../fora.lume"'))
+
+    def test_biblioteca_de_arquivos_limitada_ao_projeto(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            saidas: list[str] = []
+            interpretador = Interpretador(saida=saidas.append, diretorio_raiz=diretorio)
+            interpretador.executar(analisar_sintaxe(
+                'escrever_arquivo("dados.txt", "Olá")\n'
+                'mostrar ler_arquivo("dados.txt")\n'
+                'anexar_arquivo("dados.txt", "!")\n'
+                'mostrar existe_arquivo("dados.txt")\n'
+                'mostrar ler_arquivo("dados.txt")'
+            ))
+            self.assertEqual(saidas, ["Olá", "verdadeiro", "Olá!"])
+
+    def test_escrita_rejeita_travessia_de_diretorio(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            interpretador = Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            with self.assertRaisesRegex(ErroExecucao, "dentro do diretório"):
+                interpretador.executar(analisar_sintaxe(
+                    'escrever_arquivo("../fora.txt", "proibido")'
+                ))
 
 if __name__ == "__main__":
     unittest.main()

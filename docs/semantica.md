@@ -234,3 +234,8 @@ fim
 ```
 
 A validação semântica verifica se o destino de atribuição por índice é uma lista quando o tipo é conhecido, e se o índice é inteiro. O tratamento captura erros de execução da Lume e não intercepta falhas arbitrárias do processo Python.
+
+
+## Módulos e arquivos
+
+As instruções estruturadas importar "apoio.lume" e as funções ler_arquivo, escrever_arquivo, anexar_arquivo e existe_arquivo também estão disponíveis no front-end semântico. A validação verifica os nomes e a quantidade de argumentos; a existência, permissões e conteúdo dos arquivos são verificados em execução.

@@ -67,6 +67,20 @@ class TestesCLI(unittest.TestCase):
         self.assertEqual(resultado.returncode, 1)
         self.assertIn("não definido", resultado.stderr)
 
+    def test_cli_importa_modulo_relativo_ao_programa(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            raiz = Path(diretorio)
+            (raiz / "apoio.lume").write_text(
+                'definir mensagem como "módulo"\n', encoding="utf-8"
+            )
+            principal = raiz / "principal.lume"
+            principal.write_text(
+                'importar "apoio.lume"\nmostrar mensagem\n', encoding="utf-8"
+            )
+            resultado = self.executar_cli(str(principal))
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+        self.assertEqual(resultado.stdout.strip(), "módulo")
+
 
 if __name__ == "__main__":
     unittest.main()

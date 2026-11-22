@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+from pathlib import Path
 from typing import Callable
 
 from .ambiente import Ambiente
@@ -16,6 +17,7 @@ from .erros import (
 from .nos import (
     Atribuir,
     AtribuirIndice,
+    Importar,
     Tentar,
     Lancar,
     Binaria,
@@ -64,10 +66,14 @@ class Interpretador:
         saida: Callable[[str], None] | None = None,
         entrada: Callable[[str], str] | None = None,
         limite_passos: int = LIMITE_PASSOS,
+        diretorio_raiz: str | Path | None = None,
     ) -> None:
         self.saida = saida or print
         self.entrada = entrada or input
         self.limite_passos = limite_passos
+        self.diretorio_raiz = Path(diretorio_raiz or Path.cwd()).resolve()
+        self._modulos_carregados: set[Path] = set()
+        self._modulos_em_carga: set[Path] = set()
         self.passos = 0
         self.nivel_lacos = 0
         self.ambiente = Ambiente()
@@ -75,6 +81,9 @@ class Interpretador:
 
     def executar(self, programa: Programa) -> None:
         self.passos = 0
+        self._executar_programa(programa)
+
+    def _executar_programa(self, programa: Programa) -> None:
         try:
             self._executar_bloco(programa.declaracoes, self.ambiente)
         except SinalRetorno:
@@ -93,6 +102,88 @@ class Interpretador:
                 self._executar_instrucao(declaracao)
         finally:
             self.ambiente = anterior
+
+    def _resolver_caminho(self, caminho: object) -> Path:
+        if not isinstance(caminho, str) or not caminho.strip():
+            raise ErroExecucao("o caminho precisa ser um texto não vazio")
+        relativo = Path(caminho)
+        if relativo.is_absolute():
+            raise ErroExecucao("caminhos absolutos não são permitidos")
+        destino = (self.diretorio_raiz / relativo).resolve()
+        try:
+            destino.relative_to(self.diretorio_raiz)
+        except ValueError as erro:
+            raise ErroExecucao("o caminho precisa permanecer dentro do diretório do projeto") from erro
+        return destino
+
+    def _executar_modulo(self, caminho: str) -> None:
+        arquivo = self._resolver_caminho(caminho)
+        if arquivo.suffix.casefold() != ".lume":
+            raise ErroExecucao("módulos precisam usar a extensão .lume")
+        if arquivo in self._modulos_carregados:
+            return
+        if arquivo in self._modulos_em_carga:
+            raise ErroExecucao(f"ciclo de importação detectado no módulo '{caminho}'")
+        try:
+            dados = arquivo.read_bytes()
+        except FileNotFoundError as erro:
+            raise ErroExecucao(f"módulo não encontrado: '{caminho}'") from erro
+        except OSError as erro:
+            raise ErroExecucao(f"não foi possível ler o módulo '{caminho}': {erro}") from erro
+        if len(dados) > 1_048_576:
+            raise ErroExecucao("o módulo ultrapassa o limite de 1 MiB")
+        try:
+            fonte = dados.decode("utf-8")
+        except UnicodeDecodeError as erro:
+            raise ErroExecucao(f"o módulo '{caminho}' não está codificado em UTF-8") from erro
+        self._modulos_em_carga.add(arquivo)
+        try:
+            from .semantica import InterpretadorSemantico, detectar_sintaxe_semantica
+            if detectar_sintaxe_semantica(fonte):
+                from .representacao import programa_ir_para_ast
+                semantico = InterpretadorSemantico(self)
+                resultado = semantico.verificar(fonte)
+                self._executar_programa(programa_ir_para_ast(resultado.programa))
+                semantico.compilador.confirmar(resultado)
+            else:
+                from .parser import analisar_sintaxe
+                self._executar_programa(analisar_sintaxe(fonte))
+            self._modulos_carregados.add(arquivo)
+        finally:
+            self._modulos_em_carga.discard(arquivo)
+
+    def _ler_arquivo(self, caminho: object) -> str:
+        arquivo = self._resolver_caminho(caminho)
+        try:
+            dados = arquivo.read_bytes()
+        except OSError as erro:
+            raise ErroExecucao(f"não foi possível ler o arquivo: {erro}") from erro
+        if len(dados) > 1_048_576:
+            raise ErroExecucao("o arquivo ultrapassa o limite de leitura de 1 MiB")
+        try:
+            return dados.decode("utf-8")
+        except UnicodeDecodeError as erro:
+            raise ErroExecucao("o arquivo não está codificado em UTF-8") from erro
+
+    def _escrever_arquivo(self, caminho: object, conteudo: object, anexar: bool = False) -> None:
+        arquivo = self._resolver_caminho(caminho)
+        if not isinstance(conteudo, str):
+            raise ErroExecucao("o conteúdo do arquivo precisa ser um texto")
+        dados = conteudo.encode("utf-8")
+        if len(dados) > 1_048_576:
+            raise ErroExecucao("o conteúdo ultrapassa o limite de escrita de 1 MiB")
+        if anexar and arquivo.exists():
+            try:
+                if arquivo.stat().st_size + len(dados) > 1_048_576:
+                    raise ErroExecucao("o arquivo ultrapassaria o limite de 1 MiB")
+            except OSError as erro:
+                raise ErroExecucao(f"não foi possível consultar o arquivo: {erro}") from erro
+        try:
+            modo = "ab" if anexar else "wb"
+            with arquivo.open(modo) as destino:
+                destino.write(dados)
+        except OSError as erro:
+            raise ErroExecucao(f"não foi possível escrever o arquivo: {erro}") from erro
 
     def _passo(self) -> None:
         self.passos += 1
@@ -115,6 +206,10 @@ class Interpretador:
         if isinstance(no, Atribuir):
             valor = self._avaliar(no.valor)
             self.ambiente.atribuir(no.nome, valor)
+            return
+
+        if isinstance(no, Importar):
+            self._executar_modulo(no.caminho)
             return
 
         if isinstance(no, AtribuirIndice):
@@ -465,6 +560,10 @@ class Interpretador:
         registrar("contem", 2, 2, lambda colecao, valor: valor in colecao if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'contem' exige uma lista ou texto"))
         registrar("ordenar", 1, 1, ordenar)
         registrar("inverter", 1, 1, lambda colecao: colecao[::-1] if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'inverter' exige uma lista ou texto"))
+        registrar("ler_arquivo", 1, 1, self._ler_arquivo)
+        registrar("escrever_arquivo", 2, 2, lambda caminho, texto: self._escrever_arquivo(caminho, texto))
+        registrar("anexar_arquivo", 2, 2, lambda caminho, texto: self._escrever_arquivo(caminho, texto, anexar=True))
+        registrar("existe_arquivo", 1, 1, lambda caminho: self._resolver_caminho(caminho).is_file())
         registrar("juntar", 2, 2, lambda lista, separador: separador.join(lista) if isinstance(lista, (list, tuple)) and isinstance(separador, str) and all(isinstance(item, str) for item in lista) else self._erro_tipo("'juntar' exige uma lista de textos e um separador"))
 
 

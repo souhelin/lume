@@ -31,6 +31,8 @@ FUNCOES_NATIVAS: dict[str, tuple[int, int | None]] = {
     "minimo": (1, 1), "maximo": (1, 1), "arredondar": (1, 2),
     "maiusculas": (1, 1), "minusculas": (1, 1), "adicionar": (2, 2),
     "inserir": (3, 3), "remover": (2, 2), "contem": (2, 2),
+    "ler_arquivo": (1, 1), "escrever_arquivo": (2, 2),
+    "anexar_arquivo": (2, 2), "existe_arquivo": (1, 1),
     "ordenar": (1, 1), "inverter": (1, 1), "juntar": (2, 2),
 }
 TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
@@ -38,6 +40,8 @@ TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
     "inteiro": int, "decimal": float, "contem": bool,
     "adicionar": int, "inserir": int, "ordenar": list, "juntar": str,
     "intervalo": list, "minimo": None, "maximo": None,
+    "ler_arquivo": str, "escrever_arquivo": type(None),
+    "anexar_arquivo": type(None), "existe_arquivo": bool,
 }
 
 
@@ -70,7 +74,7 @@ def detectar_sintaxe_semantica(fonte: str) -> bool:
         "defina", "atribua", "atribui", "atualize", "atualiza", "some", "somar",
         "subtraia", "subtrai", "multiplique", "multiplica", "divida",
         "divide", "compare", "compara", "repita", "repete", "adicione",
-        "adiciona", "remova", "remove", "retorne", "devolva", "tente", "lance",
+        "adiciona", "remova", "remove", "retorne", "devolva", "tente", "lance", "importar",
     )
     for linha in fonte.splitlines():
         texto = normalizar_termo(linha).lstrip()
@@ -449,7 +453,7 @@ class TradutorSemantico:
         comandos_legados = {
             "mostrar", "exibir", "definir", "se", "senão", "enquanto",
             "para", "função", "retornar", "interromper", "continuar", "fim",
-            "tente", "capture", "finalmente", "lance",
+            "tente", "capture", "finalmente", "lance", "importar",
         }
         if primeiro and primeiro.group(1).casefold() not in comandos_legados:
             palavra = primeiro.group(1)
@@ -481,7 +485,9 @@ class _Validador:
     ) -> None:
         for instrucao in instrucoes:
             op, args = instrucao.operacao, instrucao.argumentos
-            if op == "declarar":
+            if op == "importar_modulo":
+                continue
+            elif op == "declarar":
                 nome, valor = args
                 tipo = self._expressao(valor, contexto)
                 contexto.variaveis.add(nome)
