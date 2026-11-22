@@ -30,7 +30,9 @@ Os módulos responsáveis são:
 - vocabulario.py: registro expansível de expressões, significado, categoria, intenção, operações associadas, relações, regras e ambiguidades.
 - semantica.py: padrões naturais documentados, contexto, compilação, análise de ambiguidades e validador estático.
 - representacao.py: IR independente da frase original e adaptadores entre IR e AST.
-- erros.py: categorias de erro semântico e ambiguidade, além dos erros léxicos, sintáticos e de execução.\n- permissoes.py: allowlist explícita de hosts externos, negada por padrão.\n- rede.py: cliente HTTP(S) baseado apenas na biblioteca padrão, carregado sob demanda.
+- erros.py: categorias de erro semântico e ambiguidade, além dos erros léxicos, sintáticos e de execução.
+- permissoes.py: allowlist explícita de hosts externos, negada por padrão.
+- rede.py: cliente HTTP(S) baseado apenas na biblioteca padrão, carregado sob demanda.
 
 A camada semântica não cria código Python e não chama eval ou exec. O vocabulário não executa palavras isoladamente: os padrões reconhecidos viram instruções canônicas; estas são transformadas em IR e validadas antes de alcançar o executor existente.
 
@@ -61,7 +63,9 @@ lume/
   representacao.py  representação intermediária
   semantica.py      compilador, contexto e validador semântico
   tokens.py         estrutura dos tokens
-  vocabulario.py    dicionário semântico expansível\n  permissoes.py     permissões explícitas por host\n  rede.py           cliente HTTP(S) opcional e limitado
+  vocabulario.py    dicionário semântico expansível
+  permissoes.py     permissões explícitas por host
+  rede.py           cliente HTTP(S) opcional e limitado
   __main__.py       execução por python -m lume
   __init__.py       API pública
 ~~~
