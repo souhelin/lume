@@ -4,7 +4,7 @@
 
 ## Arquitetura
 
-- SQLite local, schema v5, índices e integridade referencial.
+- SQLite local, schema v6, índices e integridade referencial.
 - NFC + casefold, preservando diacríticos.
 - Lemas, classes gramaticais, formas, fontes, licença e versão por registro.
 - Sentidos/synsets independentes dos lemas: uma palavra pode participar de vários sentidos.
