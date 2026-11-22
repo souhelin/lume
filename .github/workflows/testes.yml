@@ -105,3 +105,26 @@ jobs:
         run: |
           python scripts/testar_fserb_real.py \
             /tmp/lexico /tmp/conjugacoes /tmp/verbos /tmp/icf
+
+  bootstrap-integral:
+    name: Construção do banco lexical offline completo
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar parser RDF
+        run: python -m pip install '.[rdf]'
+      - name: Construir SQLite com snapshots e checksums fixados
+        run: |
+          python scripts/instalar_bases_lexicais.py \
+            --destino /tmp/lume-lexicon.sqlite3 \
+            --confirmar-direitos
+      - name: Verificar banco e avisos de licença
+        run: |
+          test -s /tmp/lume-lexicon.sqlite3
+          test -s /tmp/lume-lexicon.sqlite3.licenses.txt
