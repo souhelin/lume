@@ -69,7 +69,7 @@ mostrar "Olá", nome
 mostrar "No próximo ano você terá", proximo_ano
 ```
 
-`definir nome como valor` cria ou atualiza uma variável no ambiente atual. A forma `definir nome = valor` também é aceita.
+`definir nome como valor` cria uma variável. Para atualizar uma variável existente, use `nome = valor`. A forma `definir nome = valor` também é aceita para declaração.
 
 ### Condições
 
@@ -118,7 +118,7 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 
 - Palavras-chave e identificadores em português, com suporte a acentos e Unicode.
 - Textos, inteiros, decimais, valores lógicos, valor nulo e listas com acesso por índice (inclusive índices negativos).
-- Variáveis e operações matemáticas.
+- Variáveis, reatribuição de valores e operações matemáticas.
 - Comparações com símbolos (`>=`) ou expressões (`maior ou igual a`).
 - Operadores lógicos `e`, `ou` e `não`, com avaliação de curto-circuito.
 - Condições `se`, `senão` e `senão se`.

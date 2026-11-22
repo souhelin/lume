@@ -19,3 +19,12 @@ class Ambiente:
         if self.anterior is not None:
             return self.anterior.obter(nome)
         raise ErroExecucao(f"nome não definido: '{nome}'")
+
+    def atribuir(self, nome: str, valor: object) -> None:
+        if nome in self.valores:
+            self.valores[nome] = valor
+            return
+        if self.anterior is not None:
+            self.anterior.atribuir(nome, valor)
+            return
+        raise ErroExecucao(f"não é possível alterar '{nome}': nome não definido")

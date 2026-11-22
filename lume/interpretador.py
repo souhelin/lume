@@ -14,6 +14,7 @@ from .erros import (
     SinalRetorno,
 )
 from .nos import (
+    Atribuir,
     Binaria,
     Chamada,
     Condicional,
@@ -106,6 +107,11 @@ class Interpretador:
 
         if isinstance(no, Definir):
             self.ambiente.definir(no.nome, self._avaliar(no.valor))
+            return
+
+        if isinstance(no, Atribuir):
+            valor = self._avaliar(no.valor)
+            self.ambiente.atribuir(no.nome, valor)
             return
 
         if isinstance(no, ExpressaoInstrucao):

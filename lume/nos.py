@@ -106,3 +106,9 @@ class Continuar:
 class Indice:
     colecao: object
     indice: object
+
+
+@dataclass(slots=True)
+class Atribuir:
+    nome: str
+    valor: object
