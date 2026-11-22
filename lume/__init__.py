@@ -1,9 +1,10 @@
 """API pública da linguagem de programação Lume."""
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
-from .erros import ErroAmbiguidade, ErroSemantico
+from .erros import (ErroAmbiguidade, ErroExecucao, ErroLume, ErroLexico, ErroSemantico, ErroSintatico, Posicao)
 from .interpretador import Interpretador
+from .formatador import formatar_fonte
 from .parser import analisar_sintaxe
 from .representacao import ExpressaoIR, InstrucaoIR, ProgramaIR
 from .semantica import (
@@ -23,6 +24,12 @@ from .vocabulario import (
 
 __all__ = [
     "Interpretador",
+    "formatar_fonte",
+    "ErroLume",
+    "ErroLexico",
+    "ErroSintatico",
+    "ErroExecucao",
+    "Posicao",
     "ErroSemantico",
     "ErroAmbiguidade",
     "analisar_sintaxe",

@@ -26,18 +26,18 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [x] Testes de vocabulário, equivalência, contexto, ambiguidade, IR e validação.
 - [x] Exemplo executável e documentação dos padrões e limites.
 - [ ] Ampliar a gramática semântica com corpus de compatibilidade e especificação formal por padrão.
-- [ ] Mensagens de erro de execução com linha e coluna preservadas de ponta a ponta.
+- [x] Posições de linha e coluna preservadas em instruções da AST, IR, erros semânticos e erros de execução.
 - [ ] Inferência de tipos e fluxo de controle mais completos.
 - [ ] Biblioteca padrão organizada em módulos internos.
 - [ ] Testes de recuperação e edição incremental no REPL.
 
 ## 0.3.0 — Programas maiores
 
-- [ ] Sistema de módulos e importações com regras explícitas.
-- [ ] Manipulação de arquivos com permissões e limites definidos.
-- [ ] Tratamento estruturado de erros na própria linguagem.
-- [ ] Formatador e ferramenta de diagnóstico.
-- [ ] Documentação completa para iniciantes.
+- [x] Sistema de módulos locais com cache por instância, detecção de ciclos e raiz de projeto.
+- [x] Leitura e escrita UTF-8 confinadas à raiz do projeto e limitadas a 1 MiB.
+- [x] Tratamento estruturado com tente, capture, finalmente e lance.
+- [x] Formatador de recuo e diagnósticos de linha/coluna na CLI.
+- [ ] Guia completo para iniciantes e tutoriais por projeto.
 
 ## 1.0.0 — Estabilidade
 
@@ -50,3 +50,6 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 ## Direção de longo prazo
 
 Depois de estabilizar a semântica, avaliar bytecode ou uma implementação nativa. Uma migração de runtime não deve alterar a linguagem visível nem ser feita apenas por expectativa de desempenho: primeiro devem existir benchmarks e requisitos concretos.
+
+
+A versão 0.3.0 reúne os recursos marcados como concluídos nesta etapa. A matriz de CI cobre os três sistemas operacionais e quatro versões do Python; a publicação de artefatos e a verificação em ambientes realmente limpos ainda precisam de uma etapa de lançamento.

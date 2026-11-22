@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .erros import Posicao
+
 
 @dataclass(slots=True)
 class Programa:
@@ -47,59 +49,59 @@ class Binaria:
 @dataclass(slots=True)
 class Mostrar:
     valores: list[object]
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Definir:
     nome: str
     valor: object
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class ExpressaoInstrucao:
     expressao: object
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Condicional:
     condicao: object
     caminho_verdadeiro: list[object]
     caminho_falso: list[object]
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Enquanto:
     condicao: object
     corpo: list[object]
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class ParaCada:
     nome: str
     iteravel: object
     corpo: list[object]
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class FuncaoDeclaracao:
     nome: str
     parametros: list[str]
     corpo: list[object]
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Retornar:
     valor: object | None
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Interromper:
-    pass
+    posicao: Posicao | None = None
 
 
 @dataclass(slots=True)
 class Continuar:
-    pass
+    posicao: Posicao | None = None
 
 
 @dataclass(slots=True)
@@ -112,14 +114,14 @@ class Indice:
 class Atribuir:
     nome: str
     valor: object
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class AtribuirIndice:
     colecao: object
     indice: object
     valor: object
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Tentar:
@@ -127,13 +129,14 @@ class Tentar:
     nome_erro: str | None
     captura: list[object]
     finalmente: list[object]
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Lancar:
     valor: object
-
+    posicao: Posicao | None = None
 
 @dataclass(slots=True)
 class Importar:
     caminho: str
+    posicao: Posicao | None = None

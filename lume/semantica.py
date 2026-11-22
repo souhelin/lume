@@ -484,6 +484,21 @@ class _Validador:
         nivel_lacos: int,
     ) -> None:
         for instrucao in instrucoes:
+            try:
+                self._validar_bloco((instrucao,), contexto, em_funcao, nivel_lacos)
+            except ErroSemantico as erro:
+                if erro.posicao is None:
+                    erro.posicao = instrucao.posicao
+                raise
+
+    def _validar_bloco(
+        self,
+        instrucoes: tuple[InstrucaoIR, ...],
+        contexto: ContextoSemantico,
+        em_funcao: bool,
+        nivel_lacos: int,
+    ) -> None:
+        for instrucao in instrucoes:
             op, args = instrucao.operacao, instrucao.argumentos
             if op == "importar_modulo":
                 continue

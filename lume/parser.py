@@ -49,7 +49,11 @@ class AnalisadorSintatico:
         self._pular_linhas()
         while not self._eh_terminador(terminadores) and self._atual().tipo != "FIM":
             antes = self.indice
-            declaracoes.append(self._instrucao())
+            inicio = self._atual().posicao
+            instrucao = self._instrucao()
+            if hasattr(instrucao, "posicao"):
+                instrucao.posicao = inicio
+            declaracoes.append(instrucao)
             if self.indice == antes:
                 raise ErroSintatico("não foi possível avançar durante a análise", self._atual().posicao)
             if self._atual().tipo not in terminadores and self._atual().tipo != "FIM" and self._atual().tipo != "NOVA_LINHA":

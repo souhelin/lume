@@ -201,6 +201,13 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         with self.assertRaisesRegex(ErroSemantico, "não definido"):
             compilador.compilar("mostre variavel_inexistente")
 
+    def test_diagnostico_semantico_preserva_linha(self) -> None:
+        compilador = CompiladorSemantico()
+        with self.assertRaises(ErroSemantico) as contexto:
+            compilador.compilar('mostre "válido"\nmostre ausente')
+        self.assertIsNotNone(contexto.exception.posicao)
+        self.assertEqual(contexto.exception.posicao.linha, 2)
+
     def test_referencia_a_declaracao_futura_e_rejeitada(self) -> None:
         compilador = CompiladorSemantico()
         with self.assertRaisesRegex(ErroSemantico, "não definido"):

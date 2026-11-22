@@ -169,3 +169,8 @@ A biblioteca padrão fornece:
 - existe_arquivo(caminho): verifica se um arquivo existe.
 
 Os caminhos são relativos ao diretório raiz do projeto, não podem escapar dele e os arquivos são limitados a 1 MiB. Os diretórios pais precisam existir. A biblioteca não oferece acesso a arquivos fora dessa raiz. Isso é uma restrição de escopo, não uma sandbox de segurança contra código hostil.
+
+
+## Formatação automática
+
+O comando lume --formatar arquivo.lume valida a fonte e normaliza o recuo de blocos para quatro espaços. lume --formatar --gravar arquivo.lume grava o resultado no arquivo original; sem --gravar, imprime o resultado sem modificar a fonte. O formatador preserva o conteúdo dos textos e não reescreve expressões.

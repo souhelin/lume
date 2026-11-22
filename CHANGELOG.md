@@ -30,3 +30,15 @@
 - Limites de 1 MiB para módulos e conteúdo de arquivos.
 - Preservado o orçamento global de etapas ao executar módulos importados.
 - Testes de importação, ciclos, acesso fora da raiz e operações de arquivos.
+
+
+## 0.3.0 — Recursos para programas maiores
+
+- Atribuição por índice em listas.
+- Tratamento estruturado de erros.
+- Importação de módulos locais com cache e detecção de ciclos.
+- Biblioteca de arquivos UTF-8 com raiz de projeto e limites de tamanho.
+- Diagnósticos de execução e validação com linha e coluna.
+- Formatador determinístico de indentação.
+- CI expandido para Linux, macOS e Windows com Python 3.10–3.13.
+- Construção de wheel validada na integração contínua.

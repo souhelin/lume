@@ -84,6 +84,13 @@ class TestesLume(unittest.TestCase):
         with self.assertRaisesRegex(ErroExecucao, "dividir por zero"):
             self.executar("mostrar 10 / 0")
 
+    def test_erro_de_execucao_preserva_linha_e_coluna(self) -> None:
+        with self.assertRaises(ErroExecucao) as contexto:
+            self.executar('mostrar "ok"\nmostrar 10 / 0')
+        self.assertIsNotNone(contexto.exception.posicao)
+        self.assertEqual(contexto.exception.posicao.linha, 2)
+        self.assertEqual(contexto.exception.posicao.coluna, 1)
+
     def test_nome_nao_definido(self) -> None:
         with self.assertRaisesRegex(ErroExecucao, "não definido"):
             self.executar("mostrar desconhecido")

@@ -4,9 +4,11 @@
 
 A Lume é uma linguagem interpretada criada para que instruções de programação sejam escritas em português. Seu interpretador tem analisador léxico, analisador sintático, árvore de sintaxe abstrata e ambiente de execução próprios. A execução não usa inteligência artificial, conexão com a internet, `eval` ou execução de código Python fornecido pelo programa.
 
-> **Estado do projeto:** versão inicial `0.1.0` (alfa). A base do interpretador e os recursos descritos como implementados estão cobertos por testes. A linguagem ainda não deve ser considerada estável ou pronta para aplicações críticas.
+> **Estado do projeto:** versão inicial `0.3.0` (alfa). A base do interpretador e os recursos descritos como implementados estão cobertos por testes. A linguagem ainda não deve ser considerada estável ou pronta para aplicações críticas.
 
 ## Primeiro programa
+
+Para um passo a passo do primeiro programa até módulos e arquivos, consulte o [Guia de início rápido](docs/guia-iniciante.md).
 
 Salve o conteúdo abaixo como `ola.lume`:
 
@@ -114,7 +116,7 @@ fim
 
 Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 
-## Recursos implementados na versão 0.1.0
+## Recursos implementados na versão 0.3.0
 
 - Palavras-chave e identificadores em português, com suporte a acentos e Unicode.
 - Textos, inteiros, decimais, valores lógicos, valor nulo e listas com acesso por índice (inclusive índices negativos).
@@ -127,7 +129,7 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 - Entrada por `perguntar(...)` e saída por `mostrar` ou `exibir`.
 - Funções nativas para conversões, listas, intervalos e textos, incluindo adicionar, inserir, remover, ordenar, inverter, verificar presença e juntar textos.
 - Limite padrão de 100.000 etapas por execução, até 100.000 itens por coleção e limites para operações numéricas.
-- Mensagens de erro em português e verificação de sintaxe pela CLI.
+- Mensagens de erro em português e verificação de sintaxe pela CLI, atribuição por índice e tratamento estruturado de erros.
 
 ## Sistema semântico de português
 
@@ -208,7 +210,7 @@ A gramática estruturada está em [docs/sintaxe.md](docs/sintaxe.md), e o front-
 
 ## Segurança e limites atuais
 
-A Lume não expõe comandos para executar código Python, carregar módulos arbitrários ou acessar arquivos do sistema na versão inicial. Isso reduz a superfície de risco, mas não torna a execução de programas desconhecidos automaticamente segura: um programa ainda pode consumir tempo e memória dentro dos limites do interpretador. Não execute código de origem desconhecida em ambientes sensíveis.
+A Lume não expõe comandos para executar código Python nem carregar módulos Python arbitrários. A importação de módulos Lume e as funções de arquivo ficam confinadas ao diretório raiz do projeto definido pela CLI. Isso reduz a superfície de risco, mas não torna a execução de programas desconhecidos automaticamente segura: um programa ainda pode consumir tempo e memória dentro dos limites do interpretador. Não execute código de origem desconhecida em ambientes sensíveis.
 
 A gramática natural ainda é um conjunto de padrões controlados, não compreensão irrestrita do português. O validador semântico faz inferência parcial; operações que dependem de valores disponíveis apenas em execução continuam sendo verificadas pelo interpretador. O uso de Python 3.10+ é um requisito do interpretador de referência desta fase; isso não impede que uma implementação nativa própria seja criada futuramente.
 
@@ -248,3 +250,15 @@ mostrar ler_arquivo("resultado.txt")
 ~~~
 
 A importação atual compartilha o ambiente do programa e não oferece namespaces ou importações seletivas. Consulte a gramática para as restrições completas.
+
+
+## Formatação
+
+A CLI pode normalizar a indentação de blocos sem alterar o conteúdo dos textos:
+
+~~~bash
+lume --formatar programa.lume
+lume --formatar --gravar programa.lume
+~~~
+
+Sem --gravar, o resultado vai para a saída padrão e o arquivo original permanece intacto. O formatador normaliza recuo e espaços externos; não reescreve expressões nem aplica um estilo de pontuação.

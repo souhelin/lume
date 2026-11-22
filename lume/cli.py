@@ -9,8 +9,9 @@ from pathlib import Path
 from . import __version__
 from .erros import ErroLume
 from .interpretador import Interpretador
+from .formatador import formatar_fonte
 from .parser import analisar_sintaxe
-from .semantica import InterpretadorSemantico, detectar_sintaxe_semantica
+from .semantica import CompiladorSemantico, InterpretadorSemantico, detectar_sintaxe_semantica
 
 
 def criar_parser_argumentos() -> argparse.ArgumentParser:
@@ -27,6 +28,8 @@ def criar_parser_argumentos() -> argparse.ArgumentParser:
                       help="força a interpretação das instruções em português")
     modo.add_argument("--tradicional", action="store_true",
                       help="usa diretamente a gramática estruturada anterior")
+    parser.add_argument("--formatar", action="store_true", help="formata o recuo do arquivo e escreve na saída padrão")
+    parser.add_argument("--gravar", action="store_true", help="grava o resultado de --formatar no próprio arquivo")
     parser.add_argument("--versao", action="version", version=f"Lume {__version__}")
     return parser
 
@@ -74,6 +77,29 @@ def executar_arquivo(
         return 1
 
 
+def formatar_arquivo(caminho: str, gravar: bool = False) -> int:
+    arquivo = Path(caminho)
+    try:
+        fonte = arquivo.read_text(encoding="utf-8")
+        usar_semantica = detectar_sintaxe_semantica(fonte)
+        if usar_semantica:
+            fonte = CompiladorSemantico().compilar(fonte).fonte_normalizada
+        else:
+            analisar_sintaxe(fonte)
+        resultado = formatar_fonte(fonte)
+        if gravar:
+            arquivo.write_text(resultado, encoding="utf-8", newline="\n")
+        else:
+            sys.stdout.write(resultado)
+        return 0
+    except (OSError, UnicodeDecodeError) as erro:
+        print(f"Não foi possível formatar '{arquivo}': {erro}", file=sys.stderr)
+        return 2
+    except ErroLume as erro:
+        _mostrar_erro(arquivo, fonte if "fonte" in locals() else "", erro)
+        return 1
+
+
 def _mostrar_erro(arquivo: Path, fonte: str, erro: ErroLume) -> None:
     posicao = erro.posicao
     if posicao is None:
@@ -93,7 +119,7 @@ def _bloco_incompleto(erro: ErroLume) -> bool:
         erro.categoria == "Erro de sintaxe"
         and any(marca in erro.mensagem for marca in (
             "esperava 'fim'", "esperava 'então'", "esperava 'faça'",
-            "esperava uma quebra de linha",
+            "esperava uma quebra de linha", "'tente' precisa de 'capture' ou 'finalmente'",
         ))
     )
 
@@ -148,6 +174,12 @@ def main(argumentos: list[str] | None = None) -> int:
     parser = criar_parser_argumentos()
     opcoes = parser.parse_args(argumentos)
     modo_semantico = True if opcoes.semantico else False if opcoes.tradicional else None
+    if opcoes.gravar and not opcoes.formatar:
+        parser.error("--gravar só pode ser usado junto com --formatar")
+    if opcoes.formatar:
+        if not opcoes.arquivo:
+            parser.error("informe um arquivo para usar --formatar")
+        return formatar_arquivo(opcoes.arquivo, opcoes.gravar)
     if not opcoes.arquivo:
         if opcoes.verificar:
             parser.error("informe um arquivo para usar --verificar")
