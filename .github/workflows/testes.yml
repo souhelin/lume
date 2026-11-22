@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Instalar o pacote
-        run: python -m pip install .
+        run: python -m pip install '.[updates]'
       - name: Construir pacote wheel
         run: python -m pip wheel . --no-deps --wheel-dir dist
       - name: Validar wheel em ambiente isolado
@@ -45,4 +45,30 @@ jobs:
           lume --semantico exemplos/portugues_natural.lume
       - name: Smoke test dos benchmarks
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-        run: python benchmarks/benchmark.py
+        run: |
+          python benchmarks/benchmark.py
+          python benchmarks/benchmark_lexicon.py --iteracoes 1000
+
+
+  bases-reais:
+    name: Integração com OpenWordNet-PT real
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar o pacote
+        run: python -m pip install .
+      - name: Baixar exportação pública do OpenWordNet-PT
+        run: |
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/omwn/omw-data/main/wns/por/wn-data-por.tab \
+            --output /tmp/wn-data-por.tab
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/omwn/omw-data/main/wns/por/LICENSE \
+            --output /tmp/wn-data-por-LICENSE
+      - name: Importar e validar base real
+        run: python scripts/testar_bases_reais.py /tmp/wn-data-por.tab
