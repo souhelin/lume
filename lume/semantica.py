@@ -800,6 +800,18 @@ class InterpretadorSemantico:
         try:
             try:
                 contexto_modulo = contexto.copiar()
+                for linha in fonte.splitlines():
+                    texto = linha.strip()
+                    if not texto or texto.startswith("#"):
+                        continue
+                    importacao = re.fullmatch(
+                        r"""importar\s+["']([^"']+)["']""", texto, re.IGNORECASE
+                    )
+                    if not importacao:
+                        break
+                    contexto_modulo = self._validar_modulo(
+                        importacao.group(1), contexto_modulo, carregando, carregados
+                    )
                 tradutor = TradutorSemantico(self.compilador.dicionario)
                 fonte_normalizada = tradutor.traduzir(fonte, contexto_modulo)
                 arvore = analisar_sintaxe(fonte_normalizada)
