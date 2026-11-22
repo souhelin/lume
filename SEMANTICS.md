@@ -12,14 +12,16 @@ Uma palavra presente no Lexicon não se torna automaticamente uma instrução v�
 
 `Interpretador` recebe uma instância opcional e compartilhável de `Lexicon`. `InterpretadorSemantico` usa essa instância ou aceita outra explicitamente, oferecendo `analisar_lexico(texto)`.
 
-O resultado contém token, candidatos, pontuação, evidências, seleção e indicador de ambiguidade. A análise não reescreve a fonte, AST ou IR e não executa conteúdo lexical.
+O resultado contém token, candidatos, pontuação, evidências, seleção e indicador de ambiguidade. A análise não reescreve a fonte, AST ou IR e não executa conteúdo lexical. Se uma palavra tiver vários synsets e o contexto não separar as leituras, todos os sentidos permanecem candidatos e nenhum é escolhido.
 
 ## Estratégia atual
 
 - Tokenização Unicode preservando a forma normalizada.
 - Consulta por lema e formas registradas.
 - Pistas locais simples de classe gramatical (artigos, alguns advérbios e preposições).
-- Pontuação adicional por contextos textuais registrados.
+- Expansão de um lema em candidatos de sentido/synset, mesmo quando há apenas uma entrada lexical.
+- Pontuação por classe gramatical local, palavras da glossa, membros do synset e contextos textuais registrados.
+- Agrupamento de duplicatas de lema/classe entre fontes, mantendo a lista de procedências.
 - Ordenação determinística por pontuação, lema e identificador.
 - Seleção apenas quando há candidato único ou margem mínima suficiente.
 - Ambiguidade preservada quando a evidência é insuficiente.
@@ -28,7 +30,7 @@ As pistas gramaticais são heurísticas locais, não um parser de dependências.
 
 ## Exemplo
 
-Em “o canto”, o artigo pode favorecer uma entrada substantiva em relação a uma entrada verbal. Em “canto”, sem contexto, as duas leituras devem permanecer candidatas.
+Em “o canto”, o artigo pode favorecer uma entrada substantiva em relação a uma entrada verbal. Para um lema polissêmico como “banco”, o sistema compara glossa e membros do synset com palavras próximas; sem evidência contextual suficiente, os sentidos permanecem ambíguos.
 
 ## Evolução
 
