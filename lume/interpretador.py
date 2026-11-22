@@ -220,11 +220,13 @@ class Interpretador:
     def _http_obter(self, url: object) -> str:
         if not isinstance(url, str):
             raise ErroExecucao("o endereço HTTP precisa ser um texto")
+        self.permissoes_rede.autorizar_url(url)
         return self._cliente_http().obter_texto(url)
 
     def _http_enviar(self, url: object, conteudo: object) -> str:
         if not isinstance(url, str) or not isinstance(conteudo, str):
             raise ErroExecucao("http_enviar exige endereço e conteúdo em texto")
+        self.permissoes_rede.autorizar_url(url)
         try:
             return self._cliente_http().requisitar(url, metodo="POST", corpo=conteudo, cabecalhos={"Content-Type": "text/plain; charset=utf-8"}).decode("utf-8")
         except UnicodeDecodeError as erro:
@@ -233,6 +235,7 @@ class Interpretador:
     def _baixar_arquivo(self, url: object, caminho: object) -> int:
         if not isinstance(url, str):
             raise ErroExecucao("o endereço do download precisa ser um texto")
+        self.permissoes_rede.autorizar_url(url)
         dados = self._cliente_http().requisitar(url)
         self._escrever_bytes(caminho, dados)
         return len(dados)
