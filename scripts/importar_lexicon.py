@@ -2,7 +2,10 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
-from lume import Lexicon, importar_fserb_lexico, importar_fserb_conjugacoes, importar_openwordnet_tsv
+from lume import (
+    Lexicon, importar_fserb_lexico, importar_fserb_conjugacoes,
+    importar_openwordnet_tsv, importar_openwordnet_ttl,
+)
 
 
 def main() -> int:
@@ -13,12 +16,19 @@ def main() -> int:
     parser.add_argument("--fserb-lexico", type=Path)
     parser.add_argument("--fserb-conjugacoes", type=Path)
     parser.add_argument("--openwordnet-tsv", type=Path)
+    parser.add_argument("--openwordnet-palavras", type=Path)
+    parser.add_argument("--openwordnet-synsets", type=Path)
+    parser.add_argument("--openwordnet-palavras-sentido", type=Path)
+    parser.add_argument("--openwordnet-relacoes", type=Path)
+    parser.add_argument("--versao-openwordnet-ttl", default="master")
     parser.add_argument(
         "--confirmar-direitos", action="store_true",
         help="confirma que você revisou licença, atribuição e direitos dos arquivos informados",
     )
     args = parser.parse_args()
-    if not any((args.fserb_lexico, args.fserb_conjugacoes, args.openwordnet_tsv)):
+    if not any((args.fserb_lexico, args.fserb_conjugacoes, args.openwordnet_tsv,
+                args.openwordnet_palavras, args.openwordnet_synsets,
+                args.openwordnet_palavras_sentido, args.openwordnet_relacoes)):
         parser.error("informe ao menos uma fonte local")
     with Lexicon(args.banco) as lexicon:
         if args.fserb_lexico:
@@ -34,6 +44,15 @@ def main() -> int:
         if args.openwordnet_tsv:
             print(importar_openwordnet_tsv(
                 lexicon, args.openwordnet_tsv, versao=args.versao_openwordnet,
+                confirmar_direitos=args.confirmar_direitos,
+            ))
+        ttl = (args.openwordnet_palavras, args.openwordnet_synsets,
+               args.openwordnet_palavras_sentido, args.openwordnet_relacoes)
+        if any(ttl):
+            if not all(ttl):
+                parser.error("informe os quatro arquivos Turtle do OpenWordNet")
+            print(importar_openwordnet_ttl(
+                lexicon, *ttl, versao=args.versao_openwordnet_ttl,
                 confirmar_direitos=args.confirmar_direitos,
             ))
         print("Estatísticas:", lexicon.estatisticas())
