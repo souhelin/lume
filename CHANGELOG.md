@@ -12,3 +12,11 @@
 
 - Implementado o primeiro interpretador próprio da Lume, com lexer, parser, AST, variáveis, expressões, coleções, condições, laços, funções, CLI e testes.
 - Expandido o acesso a índices, operações sobre listas, atribuição e console interativo.
+
+
+## Próxima etapa — recursos estruturados
+
+- Adicionada atribuição por índice para listas mutáveis.
+- Adicionados blocos `tente`, `capture`, `finalmente` e `lance` para tratamento de erros da linguagem.
+- IR e validador semântico estendidos para essas operações.
+- Testes de regressão para mutação por índice e fluxo de tratamento de erros.

@@ -11,7 +11,7 @@ from typing import Any
 
 from .erros import ErroSemantico
 from .nos import (
-    Atribuir, Binaria, Chamada, Condicional, Continuar, Definir,
+    Atribuir, AtribuirIndice, Tentar, Lancar, Binaria, Chamada, Condicional, Continuar, Definir,
     ExpressaoInstrucao, FuncaoDeclaracao, Indice, Interromper, Enquanto,
     ListaLiteral, Literal, Mostrar, ParaCada, Programa, Retornar, Unaria,
     Variavel,
@@ -114,6 +114,20 @@ def instrucao_para_ir(no: object) -> InstrucaoIR:
         return InstrucaoIR("retornar", (
             None if no.valor is None else expressao_para_ir(no.valor),
         ))
+    if isinstance(no, AtribuirIndice):
+        return InstrucaoIR("atribuir_indice", (
+            expressao_para_ir(no.colecao), expressao_para_ir(no.indice),
+            expressao_para_ir(no.valor),
+        ))
+    if isinstance(no, Tentar):
+        return InstrucaoIR("tentar", (
+            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.corpo)),
+            no.nome_erro,
+            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.captura)),
+            ProgramaIR(tuple(instrucao_para_ir(i) for i in no.finalmente)),
+        ))
+    if isinstance(no, Lancar):
+        return InstrucaoIR("lancar", (expressao_para_ir(no.valor),))
     if isinstance(no, Interromper):
         return InstrucaoIR("interromper")
     if isinstance(no, Continuar):
@@ -180,6 +194,20 @@ def instrucao_ir_para_no(instrucao: InstrucaoIR) -> object:
         )
     if op == "retornar":
         return Retornar(None if args[0] is None else expressao_ir_para_no(args[0]))
+    if op == "atribuir_indice":
+        return AtribuirIndice(
+            expressao_ir_para_no(args[0]), expressao_ir_para_no(args[1]),
+            expressao_ir_para_no(args[2]),
+        )
+    if op == "tentar":
+        return Tentar(
+            [instrucao_ir_para_no(i) for i in args[0].instrucoes],
+            args[1],
+            [instrucao_ir_para_no(i) for i in args[2].instrucoes],
+            [instrucao_ir_para_no(i) for i in args[3].instrucoes],
+        )
+    if op == "lancar":
+        return Lancar(expressao_ir_para_no(args[0]))
     if op == "interromper":
         return Interromper()
     if op == "continuar":

@@ -6,6 +6,9 @@ from .erros import ErroSintatico
 from .lexer import analisar_lexico
 from .nos import (
     Atribuir,
+    AtribuirIndice,
+    Tentar,
+    Lancar,
     Binaria,
     Chamada,
     Condicional,
@@ -64,6 +67,14 @@ class AnalisadorSintatico:
             self._avancar()
             return Atribuir(palavra, self._expressao())
 
+        if self._espiar_token(1).tipo == "ABRE_COLCHETE":
+            alvo = self._posfixa(self._primaria())
+            if self._corresponde("IGUAL"):
+                if not isinstance(alvo, Indice):
+                    raise ErroSintatico("o destino da atribuição precisa ser um índice de coleção", token.posicao)
+                return AtribuirIndice(alvo.colecao, alvo.indice, self._expressao())
+            raise ErroSintatico("esperava '=' depois do índice", self._atual().posicao)
+
         if palavra in {"mostrar", "exibir"}:
             self._avancar()
             valores: list[object] = []
@@ -76,6 +87,11 @@ class AnalisadorSintatico:
             return self._definir()
         if palavra == "se":
             return self._condicional()
+        if palavra == "tente":
+            return self._tentar()
+        if palavra == "lance":
+            self._avancar()
+            return Lancar(self._expressao())
         if palavra == "enquanto":
             return self._enquanto()
         if palavra == "para":
@@ -106,6 +122,26 @@ class AnalisadorSintatico:
         else:
             raise ErroSintatico("use 'como' ou '=' para atribuir um valor", self._atual().posicao)
         return Definir(str(nome.valor), self._expressao())
+
+    def _tentar(self) -> Tentar:
+        self._consumir_palavra("tente", "esperava 'tente'")
+        self._nova_linha_obrigatoria()
+        corpo = self._bloco({"capture", "finalmente", "FIM"})
+        nome_erro: str | None = None
+        captura: list[object] = []
+        finalmente: list[object] = []
+        if self._corresponde_palavra("capture"):
+            if self._atual().tipo == "IDENTIFICADOR" and self._atual().valor not in {"finalmente", "fim"}:
+                nome_erro = str(self._avancar().valor)
+            self._nova_linha_obrigatoria()
+            captura = self._bloco({"finalmente", "FIM"})
+        if self._corresponde_palavra("finalmente"):
+            self._nova_linha_obrigatoria()
+            finalmente = self._bloco({"FIM"})
+        if not captura and not finalmente:
+            raise ErroSintatico("'tente' precisa de 'capture' ou 'finalmente'", self._atual().posicao)
+        self._consumir_palavra("fim", "esperava 'fim' para encerrar o bloco 'tente'")
+        return Tentar(corpo, nome_erro, captura, finalmente)
 
     def _condicional(self) -> Condicional:
         self._consumir_palavra("se", "esperava 'se'")

@@ -215,3 +215,23 @@ A gramática natural ainda é um conjunto de padrões controlados, não compreen
 ## Licença
 
 Distribuído sob a licença MIT. Consulte [`LICENSE`](LICENSE).
+
+
+## Tratamento de erros e atualização de listas
+
+A Lume permite atualizar itens de listas e tratar erros previsíveis:
+
+```text
+definir notas como [7, 8, 9]
+notas[1] = 10
+
+tente
+    lance "exemplo de erro"
+capture erro
+    mostrar erro
+finalmente
+    mostrar "execução encerrada"
+fim
+```
+
+Consulte [docs/sintaxe.md](docs/sintaxe.md) para as regras e limitações.

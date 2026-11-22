@@ -214,3 +214,23 @@ Sem --semantico ou --tradicional, a CLI identifica algumas formas naturais exclu
 - A gramática semântica é um conjunto finito e explícito de padrões. Português irrestrito, paráfrases inéditas, resolução geral de pronomes e compreensão de intenção implícita não fazem parte desta versão.
 - Uma expressão nova no dicionário não passa a ser executável automaticamente. A operação e sua regra precisam ser implementadas e testadas.
 - Esta etapa não adiciona módulos, arquivos, exceções definidas pelo usuário ou tipagem estática completa.
+
+
+## Recursos estruturados disponíveis no front-end semântico
+
+Como o front-end semântico compartilha o parser, a IR e o executor, também aceita as construções estruturadas de atribuição por índice e tratamento de erros:
+
+```text
+crie uma variável chamada itens com valor [1, 2]
+itens[0] = 8
+
+tente
+    lance "falha esperada"
+capture erro
+    mostre erro
+finalmente
+    mostre "finalizado"
+fim
+```
+
+A validação semântica verifica se o destino de atribuição por índice é uma lista quando o tipo é conhecido, e se o índice é inteiro. O tratamento captura erros de execução da Lume e não intercepta falhas arbitrárias do processo Python.
