@@ -15,8 +15,10 @@ class PermissoesRede:
 
     @staticmethod
     def _normalizar_host(host: str) -> str:
+        if not isinstance(host, str):
+            raise ValueError("hosts autorizados precisam ser textos")
         valor = host.strip().rstrip(".").casefold()
-        if not valor or "/" in valor or ":" in valor or "@" in valor:
+        if not valor or any(caractere.isspace() or caractere in "/:@?#" for caractere in valor):
             raise ValueError(f"host inválido na lista de permissões: {host!r}")
         return valor
 
@@ -34,8 +36,8 @@ class PermissoesRede:
         try:
             partes = urlsplit(url)
             host = (partes.hostname or "").rstrip(".").casefold()
-            porta = partes.port
-        except ValueError as erro:
+            partes.port  # valida a porta, quando presente
+        except (TypeError, ValueError) as erro:
             raise ErroExecucao("endereço de rede inválido") from erro
         if partes.scheme.casefold() not in {"http", "https"}:
             raise ErroExecucao("somente endereços HTTP e HTTPS são permitidos")
