@@ -65,6 +65,13 @@ class TestesOfflineFirst(unittest.TestCase):
             interpretador._http_obter("https://exemplo.com")
         self.assertIsNone(interpretador._cliente_rede)
 
+    def test_chamada_de_rede_na_linguagem_e_bloqueada_sem_permissao(self):
+        interpretador = Interpretador()
+        programa = analisar_sintaxe('mostrar http_obter("https://exemplo.com")\n')
+        with self.assertRaisesRegex(ErroExecucao, "bloqueado"):
+            interpretador.executar(programa)
+        self.assertIsNone(interpretador._cliente_rede)
+
     def test_permissao_nao_autoriza_outro_host(self):
         interpretador = Interpretador(hosts_rede_permitidos=["exemplo.com"])
         with self.assertRaisesRegex(ErroExecucao, "bloqueado"):
