@@ -33,4 +33,4 @@ jobs:
         with:
           files: dist/*.whl
           generate_release_notes: true
-          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'rc') }}
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') || contains(github.ref_name, 'a') || contains(github.ref_name, 'rc') }}
