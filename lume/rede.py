@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 import ssl
 
 from .erros import ErroExecucao
@@ -35,7 +35,7 @@ class ClienteRede:
         self.timeout = timeout
         self.limite_resposta = limite_resposta
         contexto = ssl.create_default_context()
-        self._opener = build_opener(_SemRedirecionamento(), __import__("urllib.request").request.HTTPSHandler(context=contexto))
+        self._opener = build_opener(_SemRedirecionamento(), HTTPSHandler(context=contexto))
 
     def requisitar(
         self,
