@@ -2,7 +2,7 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
-from lume import Lexicon, importar_openwordnet_ttl
+from lume import Lexicon, DesambiguadorContextual, importar_openwordnet_ttl
 
 
 def main() -> int:
@@ -43,7 +43,15 @@ def main() -> int:
         ]
         if not glossas:
             raise SystemExit("nenhuma glossa foi associada ao lema 'entidade'")
-        print("Base real OpenWordNet-PT validada:", resultado)
+        desambiguador = DesambiguadorContextual(lexicon)
+        banco_isolado = desambiguador.analisar("banco")
+        if banco_isolado and len(banco_isolado[0].candidatos) > 1:
+            if not banco_isolado[0].ambiguo:
+                raise SystemExit("a polissemia de 'banco' não foi preservada sem contexto")
+        banco_contextual = desambiguador.analisar("banco dinheiro")
+        if banco_contextual and banco_contextual[0].selecionado is None:
+            raise SystemExit("o contexto 'banco dinheiro' não resolveu um sentido evidente")
+        print("Base real OpenWordNet-PT e desambiguação validadas:", resultado)
         print("Estatísticas:", stats)
     return 0
 
