@@ -65,7 +65,7 @@ jobs:
         run: python -m pip install '.[rdf]'
       - name: Baixar os arquivos oficiais OpenWordNet-PT
         run: |
-          base=https://raw.githubusercontent.com/own-pt/openWordnet-PT/master/data
+          base=https://raw.githubusercontent.com/own-pt/openWordnet-PT/264016d5899e6969f6f7cb4f1d75fa06037c1fd7/data
           curl --fail --location --retry 3 "$base/own-pt-words.ttl" --output /tmp/words.ttl
           curl --fail --location --retry 3 "$base/own-pt-synsets.ttl" --output /tmp/synsets.ttl
           curl --fail --location --retry 3 "$base/own-pt-wordsenses.ttl" --output /tmp/wordsenses.ttl
