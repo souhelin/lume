@@ -91,9 +91,10 @@ class DesambiguadorContextual:
             + tokens[indice + 1:indice + 4]
         ) - self.STOPWORDS
         contextos = {
-            normalizar_forma(contexto)
+            token_contexto
             for origem in grupo
             for contexto in self.lexicon.contextos(origem.entrada.identificador)
+            for token_contexto in self._tokens(contexto)
         }
         sobreposicao_contexto = contextos & janela
         if sobreposicao_contexto:
@@ -112,7 +113,9 @@ class DesambiguadorContextual:
             )
 
         relacionados = {
-            normalizar_forma(lema) for lema in lemas_relacionados
+            token_relacionado
+            for lema in lemas_relacionados
+            for token_relacionado in self._tokens(lema)
         } - {normalizar_forma(correspondencia.entrada.lema)}
         sobreposicao_synset = relacionados & janela
         if sobreposicao_synset:
