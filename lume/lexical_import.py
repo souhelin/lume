@@ -445,21 +445,20 @@ def importar_openwordnet_ttl(
         )
         lexicon._db.executemany(
             """
-            INSERT INTO contextos
-                (entrada_id, contexto, fonte_id, licenca, versao_fonte)
+            INSERT INTO sentido_contextos
+                (sentido_id, contexto, fonte_id, licenca, versao_fonte)
             VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(entrada_id, contexto, fonte_id) DO UPDATE SET
+            ON CONFLICT(sentido_id, contexto, fonte_id) DO UPDATE SET
                 licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
             """,
             (
                 (
-                    entrada_id, exemplo, fonte,
+                    identificador, exemplo, fonte,
                     fonte_meta["licenca"], fonte_meta["versao"],
                 )
                 for uri, dados in metadados_sentidos.items()
                 for identificador in (id_sentido_por_uri.get(uri),)
                 if identificador in membros_por_sentido
-                for entrada_id in membros_por_sentido[identificador]
                 for exemplo in dados.get("examples", [])
             ),
         )
