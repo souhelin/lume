@@ -640,7 +640,12 @@ class _Validador:
                 local.variaveis.add(nome)
                 local.tipos[nome] = self._tipo_elemento(iteravel, contexto)
                 self._bloco(corpo.instrucoes, local, em_funcao, nivel_lacos + 1)
-                self._mesclar_fluxo(contexto, base, [base, local], incluir_novos=False)
+                local_para_mesclar = local.copiar()
+                if nome in base.variaveis:
+                    local_para_mesclar.tipos[nome] = base.tipos.get(nome)
+                self._mesclar_fluxo(
+                    contexto, base, [base, local_para_mesclar], incluir_novos=False
+                )
             elif op == "declarar_funcao":
                 nome, parametros, corpo = args
                 contexto.funcoes[nome] = len(parametros)

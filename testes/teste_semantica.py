@@ -310,6 +310,16 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         )
         self.assertIsNone(resultado.contexto_resultante.tipos["valor"])
 
+    def test_variavel_de_repeticao_nao_altera_nome_externo(self) -> None:
+        resultado = CompiladorSemantico().compilar(
+            'definir numero como "externo"\n'
+            'para cada numero em [1, 2] faça\n'
+            'mostrar numero + 1\n'
+            'fim\n'
+            'mostrar numero'
+        )
+        self.assertIs(resultado.contexto_resultante.tipos["numero"], str)
+
     def test_fluxo_de_repeticao_preserva_tipo_estavel(self) -> None:
         resultado = CompiladorSemantico().compilar(
             'definir total como 0\n'
