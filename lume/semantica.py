@@ -733,7 +733,7 @@ class _Validador:
             funcao, argumentos = args
             nome = funcao.argumentos[0] if funcao.operacao == "referencia" else None
             if nome is not None:
-                aridade = self.funcoes.get(nome)
+                aridade = contexto.funcoes.get(nome, FUNCOES_NATIVAS.get(nome))
                 if aridade is None and nome not in contexto.variaveis:
                     raise ErroSemantico(
                         f"função '{nome}' não definida; verifique o nome ou declare a função"
