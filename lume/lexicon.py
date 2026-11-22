@@ -486,6 +486,38 @@ class Lexicon:
                 ),
             )
 
+    def adicionar_contexto(
+        self, entrada_id: str, contexto: str, fonte_id: str
+    ) -> None:
+        """Acrescenta uma evidência contextual com sua própria procedência."""
+        if not contexto.strip():
+            raise ValueError("o contexto não pode ser vazio")
+        with self._lock, self._db:
+            fonte = self._db.execute(
+                "SELECT verificada, licenca, versao FROM fontes WHERE id=?",
+                (fonte_id,),
+            ).fetchone()
+            if fonte is None or not fonte["verificada"]:
+                raise ValueError("a fonte do contexto precisa estar verificada")
+            existe = self._db.execute(
+                "SELECT 1 FROM entradas WHERE id=?", (entrada_id,)
+            ).fetchone()
+            if existe is None:
+                raise ValueError("a entrada do contexto precisa existir")
+            self._db.execute(
+                """
+                INSERT INTO contextos
+                    (entrada_id, contexto, fonte_id, licenca, versao_fonte)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(entrada_id, contexto, fonte_id) DO UPDATE SET
+                    licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
+                """,
+                (
+                    entrada_id, contexto.strip(), fonte_id,
+                    fonte["licenca"], fonte["versao"],
+                ),
+            )
+
     def registrar_sentido(
         self, identificador: str, fonte_id: str, classe: str,
         definicao: str | None, entradas: Iterable[str],
