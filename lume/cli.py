@@ -28,6 +28,7 @@ def criar_parser_argumentos() -> argparse.ArgumentParser:
                       help="força a interpretação das instruções em português")
     modo.add_argument("--tradicional", action="store_true",
                       help="usa diretamente a gramática estruturada anterior")
+    parser.add_argument("--permitir-rede", action="append", default=[], metavar="HOST", help="autoriza conexões HTTP(S) apenas ao host informado; pode ser repetido")
     parser.add_argument("--formatar", action="store_true", help="formata o recuo do arquivo e escreve na saída padrão")
     parser.add_argument("--gravar", action="store_true", help="grava o resultado de --formatar no próprio arquivo")
     parser.add_argument("--versao", action="version", version=f"Lume {__version__}")
@@ -38,6 +39,7 @@ def executar_arquivo(
     caminho: str,
     verificar: bool = False,
     modo_semantico: bool | None = None,
+    hosts_rede_permitidos: list[str] | None = None,
 ) -> int:
     arquivo = Path(caminho)
     try:
@@ -58,7 +60,7 @@ def executar_arquivo(
     )
     try:
         if usar_semantica:
-            interpretador = InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent))
+            interpretador = InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or []))
             if verificar:
                 interpretador.verificar(fonte)
                 print(f"Semântica válida: {arquivo}")
@@ -124,11 +126,11 @@ def _bloco_incompleto(erro: ErroLume) -> bool:
     )
 
 
-def iniciar_repl(modo_semantico: bool | None = None) -> int:
+def iniciar_repl(modo_semantico: bool | None = None, hosts_rede_permitidos: list[str] | None = None) -> int:
     print(f"Lume {__version__} — ambiente interativo")
     print("Digite uma instrução por linha. Use 'sair' para encerrar.")
     print("Blocos podem ocupar várias linhas e terminam com 'fim'.")
-    interpretador = Interpretador()
+    interpretador = Interpretador(hosts_rede_permitidos=hosts_rede_permitidos or [])
     interpretador_semantico = InterpretadorSemantico(interpretador)
 
     while True:
@@ -183,8 +185,12 @@ def main(argumentos: list[str] | None = None) -> int:
     if not opcoes.arquivo:
         if opcoes.verificar:
             parser.error("informe um arquivo para usar --verificar")
-        return iniciar_repl(modo_semantico)
-    return executar_arquivo(opcoes.arquivo, opcoes.verificar, modo_semantico)
+        if opcoes.permitir_rede:
+            print("Hosts externos explicitamente autorizados:", ", ".join(opcoes.permitir_rede), file=sys.stderr)
+        return iniciar_repl(modo_semantico, opcoes.permitir_rede)
+    if opcoes.permitir_rede:
+        print("Hosts externos explicitamente autorizados:", ", ".join(opcoes.permitir_rede), file=sys.stderr)
+    return executar_arquivo(opcoes.arquivo, opcoes.verificar, modo_semantico, opcoes.permitir_rede)
 
 
 if __name__ == "__main__":
