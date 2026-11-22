@@ -215,6 +215,17 @@ with Lexicon("dados/lexicon.sqlite3") as lexicon:
     print(semantica.analisar_lexico("o banco recebeu dinheiro"))
 ```
 
+### Uso pela CLI
+
+Com o banco pronto, passe-o explicitamente ao executar um programa:
+
+```bash
+lume --lexicon dados/lexicon.sqlite3 programa.lume
+lume --lexicon dados/lexicon.sqlite3
+```
+
+O mesmo banco fica disponível no REPL e nas funções nativas `consultar_lexico(texto)` e `analisar_lexico(texto)`. Elas retornam listas de correspondências/evidências e não transformam palavras do dicionário em comandos executáveis. Sem `--lexicon`, essas funções informam que o banco não foi carregado.
+
 ### Funcionalidades
 
 - Importadores fserb para léxico, conjugações, lista de verbos e ICF.
