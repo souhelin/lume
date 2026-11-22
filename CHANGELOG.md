@@ -50,10 +50,5 @@
 - Testes de REPL para blocos multilinha, erros léxicos e tratamento semântico.
 
 
-## 0.3.x — Verificação estática e documentação normativa
-
-- Verificação sem execução para o front-end tradicional e o semântico.
-- Resolução estática de símbolos e dependências de módulos locais, com ciclos e módulos ausentes detectados.
-- Importações restritas ao início do arquivo.
-- Leituras limitadas a 1 MiB durante a operação, sem carregar arquivos arbitrariamente grandes.
-- Especificação de referência, política de compatibilidade, modelo de segurança e benchmark informativo.
+- Adicionado MANIFEST.in para incluir documentação e exemplos em distribuições fonte.
+- Adicionado teste de instalação isolada do wheel na CI.

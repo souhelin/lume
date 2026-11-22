@@ -267,11 +267,4 @@ Sem --gravar, o resultado vai para a saída padrão e o arquivo original permane
 A biblioteca padrão está isolada em lume/biblioteca.py, separada do núcleo de avaliação e execução.
 
 
-## Especificação, compatibilidade e segurança
-
-A opção --verificar valida sintaxe, referências, tipos conhecidos e módulos sem executar o programa. Os imports devem ficar no início do arquivo e são analisados recursivamente.
-
-- Especificação normativa de referência: docs/especificacao.md.
-- Política de compatibilidade e versionamento: docs/compatibilidade.md.
-- Modelo de segurança e limites: docs/seguranca.md.
-- Benchmarks reproduzíveis: benchmarks/README.md.
+A integração contínua também constrói o wheel e testa sua instalação em um ambiente virtual temporário, fora da árvore do repositório. Consulte scripts/validar_wheel.py.
