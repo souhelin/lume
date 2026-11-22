@@ -487,3 +487,95 @@ def importar_openwordnet_ttl(
         fonte, len(dados_palavras), len(lote),
         sentidos_importados=len(membros_por_sentido), relacoes_importadas=total_relacoes,
     )
+
+
+def importar_fserb_verbos(
+    lexicon: Lexicon, arquivo_verbos: str | Path, *,
+    versao: str, confirmar_direitos: bool = False,
+    limite: int | None = None,
+) -> ResultadoImportacao:
+    """Importa a lista de verbos como lemas verbais, sem inferir conjugações."""
+    fonte = "fserb-pt-br-verbos"
+    _registrar_fonte(
+        lexicon, identificador=fonte, nome="fserb/pt-br — listas/verbos",
+        licenca="MIT (licença declarada no repositório; procedência agregada pendente)",
+        versao=versao, url="https://github.com/fserb/pt-br",
+        atribuicao="Copyright 2021 Fernando Serboncini; preservar LICENSE upstream.",
+        confirmar_direitos=confirmar_direitos,
+    )
+    vistos: set[str] = set()
+    lote: list[tuple[str, str, str, str | None]] = []
+    lidos = importados = ignorados = 0
+    for verbo in _linhas(arquivo_verbos):
+        lidos += 1
+        termo = normalizar_forma(verbo)
+        if termo in vistos:
+            ignorados += 1
+            continue
+        vistos.add(termo)
+        lote.append((_id(fonte, "verbo", verbo), verbo, "verbo", None))
+        if len(lote) >= 2000:
+            importados += _gravar_entradas(lexicon, fonte, lote)
+            lote.clear()
+        if limite is not None and lidos >= limite:
+            break
+    importados += _gravar_entradas(lexicon, fonte, lote)
+    return ResultadoImportacao(fonte, lidos, importados, ignorados=ignorados)
+
+
+def importar_fserb_icf(
+    lexicon: Lexicon, arquivo_icf: str | Path, *,
+    versao: str, confirmar_direitos: bool = False,
+    limite: int | None = None,
+) -> ResultadoImportacao:
+    """Importa pares palavra,pontuação ICF sem confundi-los com definições."""
+    import math
+
+    fonte = "fserb-pt-br-icf"
+    _registrar_fonte(
+        lexicon, identificador=fonte, nome="fserb/pt-br — icf",
+        licenca="MIT (licença declarada no repositório; procedência agregada pendente)",
+        versao=versao, url="https://github.com/fserb/pt-br",
+        atribuicao="Copyright 2021 Fernando Serboncini; preservar LICENSE upstream.",
+        confirmar_direitos=confirmar_direitos,
+    )
+    lote: dict[str, tuple[str, float]] = {}
+    lidos = ignorados = 0
+    with Path(arquivo_icf).open("r", encoding="utf-8-sig", newline="") as arquivo:
+        for linha in arquivo:
+            valor = linha.strip()
+            if not valor:
+                continue
+            lidos += 1
+            try:
+                palavra, pontuacao_texto = valor.rsplit(",", 1)
+                pontuacao = float(pontuacao_texto)
+                if not palavra.strip() or not math.isfinite(pontuacao) or pontuacao < 0:
+                    raise ValueError
+            except ValueError:
+                ignorados += 1
+                continue
+            lote[normalizar_forma(palavra)] = (palavra, pontuacao)
+            if limite is not None and lidos >= limite:
+                break
+    with lexicon._lock, lexicon._db:
+        fonte_meta = lexicon._db.execute(
+            "SELECT verificada, versao FROM fontes WHERE id=?", (fonte,)
+        ).fetchone()
+        if fonte_meta is None or not fonte_meta["verificada"]:
+            raise PermissionError("fonte ICF não verificada para importação")
+        lexicon._db.executemany(
+            """
+            INSERT INTO frequencias
+                (forma_normalizada, forma_original, valor, fonte_id, versao_fonte)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(forma_normalizada, fonte_id) DO UPDATE SET
+                forma_original=excluded.forma_original, valor=excluded.valor,
+                versao_fonte=excluded.versao_fonte
+            """,
+            (
+                (normalizado, palavra, pontuacao, fonte, fonte_meta["versao"])
+                for normalizado, (palavra, pontuacao) in lote.items()
+            ),
+        )
+    return ResultadoImportacao(fonte, lidos, len(lote), ignorados=ignorados)
