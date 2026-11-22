@@ -8,7 +8,7 @@ Não execute programas de origem desconhecida em diretórios que contenham dados
 
 ## Capacidades presentes
 
-- Não há eval, exec, subprocessos, importação de módulos Python ou acesso de rede expostos pela linguagem.
+- Não há eval, exec, subprocessos ou importação de módulos Python expostos pela linguagem.\n- A rede é opcional, negada por padrão e acessível somente pelas funções explícitas `http_obter`, `http_enviar` e `baixar`.\n- A inicialização offline não carrega o cliente HTTP; a allowlist exige hosts exatos e não aceita curingas.\n- Somente HTTP(S) é aceito; credenciais em URLs e redirecionamentos são rejeitados. Timeout padrão de 10 segundos e respostas limitadas a 1 MiB.
 - A importação carrega apenas arquivos .lume dentro da raiz do projeto.
 - As funções de arquivo aceitam caminhos relativos à raiz do projeto.
 - Caminhos absolutos e caminhos resolvidos fora da raiz são rejeitados.
@@ -24,7 +24,7 @@ Não execute programas de origem desconhecida em diretórios que contenham dados
 3. Módulos importados executam código com as mesmas permissões do programa principal.
 4. O limite de etapas não equivale a um limite rígido de memória ou tempo de CPU do processo hospedeiro.
 5. A implementação usa o runtime Python; vulnerabilidades no Python e no sistema operacional estão fora do controle da linguagem.
-6. A entrada e saída do programa podem revelar dados fornecidos pelo usuário ou pelo ambiente.
+6. A entrada e saída do programa podem revelar dados fornecidos pelo usuário ou pelo ambiente.\n7. Autorizar um host permite que o programa faça requisições a caminhos desse host; a allowlist não restringe endpoints nem substitui uma política de saída do sistema operacional.\n8. O cliente HTTP usa as configurações de proxy do ambiente e não promete proteção contra DNS rebinding. Prefira HTTPS e autorize somente hosts confiáveis.
 
 ## Recomendações
 
@@ -40,3 +40,4 @@ Consulte SECURITY.md para o canal de reporte. Não publique detalhes explorávei
 
 
 As funções de leitura consomem no máximo 1 MiB mais um byte de detecção antes de rejeitar arquivos maiores, evitando carregar um arquivo arbitrariamente grande na memória durante a leitura normal. Isso não elimina corridas de sistema de arquivos nem substitui limites externos do processo.
+\n\nConsulte [offline-first.md](offline-first.md) para a configuração de permissões, funções de rede, limites e garantias de execução offline.\n
