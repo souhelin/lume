@@ -18,6 +18,7 @@ from .permissoes import PermissoesRede
 def _avisar_rede(host: str) -> None:
     print(f"Programa solicitou acesso externo ao host: {host}", file=sys.stderr)
 
+
 def criar_parser_argumentos() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="lume",
@@ -74,7 +75,7 @@ def executar_arquivo(
 
         programa = analisar_sintaxe(fonte)
         if verificar:
-            InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [])).verificar(fonte)
+            InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede)).verificar(fonte)
             print(f"Programa válido: {arquivo}")
             return 0
         Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or []).executar(programa)
