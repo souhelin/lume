@@ -16,6 +16,13 @@ from .semantica import (
     compilar_semantico,
     detectar_sintaxe_semantica,
 )
+from .lexicon import (
+    CorrespondenciaLexical,
+    EntradaLexical,
+    FonteLexical,
+    Lexicon,
+    normalizar_forma,
+)
 from .vocabulario import (
     DICIONARIO_PADRAO,
     DicionarioSemantico,
@@ -25,6 +32,11 @@ from .vocabulario import (
 
 __all__ = [
     "Interpretador",
+    "Lexicon",
+    "FonteLexical",
+    "EntradaLexical",
+    "CorrespondenciaLexical",
+    "normalizar_forma",
     "PermissoesRede",
     "formatar_fonte",
     "ErroLume",
