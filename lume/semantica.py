@@ -103,17 +103,42 @@ class TradutorSemantico:
 
     @staticmethod
     def _limpar_expressao(expressao: str) -> str:
+        """Remove artigos e descritores apenas quando não apagam identificadores."""
         texto = expressao.strip()
-        texto = re.sub(r"^(?:o|a|os|as|um|uma)\s+", "", texto, flags=re.IGNORECASE)
-        texto = re.sub(r"^(?:o\s+)?valor\s+de\s+", "", texto, flags=re.IGNORECASE)
-        texto = re.sub(r"^(?:o\s+)?n[uú]mero\s+de\s+", "", texto, flags=re.IGNORECASE)
-        texto = re.sub(r"^(?:o\s+)?valor\s+", "", texto, flags=re.IGNORECASE)
-        texto = re.sub(r"^(?:o\s+)?n[uú]mero\s+", "", texto, flags=re.IGNORECASE)
+        texto = re.sub(
+            r"^(?:o\s+)?nome\s+da\s+vari[aá]vel\s+", "", texto,
+            flags=re.IGNORECASE
+        )
+        texto = re.sub(
+            r"^(?:a\s+)?vari[aá]vel\s+", "", texto, flags=re.IGNORECASE
+        )
+        texto = re.sub(
+            r"^(?:o\s+)?valor\s+de\s+", "", texto, flags=re.IGNORECASE
+        )
+        texto = re.sub(
+            r"^(?:o\s+)?n[uú]mero\s+de\s+", "", texto, flags=re.IGNORECASE
+        )
+        texto = re.sub(
+            r"^(?:(?:o|um|uma)\s+)?valor\s+(?=[+-]?\d|['\"\[]|verdadeiro\b|falso\b|nulo\b)",
+            "", texto, flags=re.IGNORECASE
+        )
+        texto = re.sub(
+            r"^(?:(?:o|um|uma)\s+)?n[uú]mero\s+(?=[+-]?\d)",
+            "", texto, flags=re.IGNORECASE
+        )
+        texto = re.sub(
+            r"^(?:o|a|os|as|um|uma)\s+"
+            r"(?=(?:nome|valor|n[uú]mero|vari[aá]vel|lista|índice|"
+            r"[úu]ltimo|primeiro|resultado|texto|conte[uú]do)\b)",
+            "", texto, flags=re.IGNORECASE
+        )
         texto = re.sub(
             r"\b(?:for|é|seja)\s+(?=(?:maior|menor|igual|diferente)\b)",
             "", texto, flags=re.IGNORECASE
         )
-        texto = re.sub(r"\b(?:da|do)\s+vari[aá]vel\s+", "", texto, flags=re.IGNORECASE)
+        texto = re.sub(
+            r"\b(?:da|do)\s+vari[aá]vel\s+", "", texto, flags=re.IGNORECASE
+        )
         return texto.strip()
 
     @staticmethod
