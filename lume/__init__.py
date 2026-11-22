@@ -22,6 +22,7 @@ from .lexical_import import (
     importar_fserb_lexico,
     importar_fserb_conjugacoes,
     importar_openwordnet_tsv,
+    importar_openwordnet_ttl,
 )
 from .lexical_update import ResultadoAtualizacao, aplicar_pacote_assinado
 from .lexicon import (
@@ -52,6 +53,7 @@ __all__ = [
     "importar_fserb_lexico",
     "importar_fserb_conjugacoes",
     "importar_openwordnet_tsv",
+    "importar_openwordnet_ttl",
     "ResultadoAtualizacao",
     "aplicar_pacote_assinado",
     "PermissoesRede",
