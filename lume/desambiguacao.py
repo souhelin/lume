@@ -106,7 +106,7 @@ class DesambiguadorContextual:
         glossario = set(self._tokens(definicao or "")) - self.STOPWORDS
         sobreposicao_glossa = glossario & janela
         if sobreposicao_glossa:
-            pontos += min(3.0, 1.25 * len(sobreposicao_glossa))
+            pontos += min(4.0, 2.0 * len(sobreposicao_glossa))
             evidencias.append(
                 "termos da glossa presentes no contexto: "
                 + ", ".join(sorted(sobreposicao_glossa))
