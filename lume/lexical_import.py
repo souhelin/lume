@@ -534,7 +534,6 @@ def importar_openwordnet_ttl(
                 relacoes_lote,
             )
         total_relacoes += len(relacoes_lote)
-    del grafo
     with lexicon._lock:
         lexicon._limpar_cache()
     return ResultadoImportacao(
