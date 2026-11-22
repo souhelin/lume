@@ -422,7 +422,7 @@ class Interpretador:
         registrar("remover", 2, 2, remover)
         registrar("contem", 2, 2, lambda colecao, valor: valor in colecao if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'contem' exige uma lista ou texto"))
         registrar("ordenar", 1, 1, ordenar)
-        registrar("inverter", 1, 1, lambda colecao: list(reversed(colecao)) if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'inverter' exige uma lista ou texto"))
+        registrar("inverter", 1, 1, lambda colecao: colecao[::-1] if isinstance(colecao, (list, tuple, str)) else self._erro_tipo("'inverter' exige uma lista ou texto"))
         registrar("juntar", 2, 2, lambda lista, separador: separador.join(lista) if isinstance(lista, (list, tuple)) and isinstance(separador, str) and all(isinstance(item, str) for item in lista) else self._erro_tipo("'juntar' exige uma lista de textos e um separador"))
 
 
