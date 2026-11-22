@@ -56,3 +56,11 @@
 
 - Adicionado workflow de release por tag com testes, build e validação isolada do wheel antes de publicar no GitHub Releases.
 - A validação do wheel agora compara a versão instalada com os metadados do projeto, sem versão codificada no script.
+
+
+## Validação de fluxo e distribuição
+
+- A inferência semântica agora mescla conservadoramente os tipos nos caminhos de condicionais, laços e tratamento de erros.
+- Adicionados testes de equivalência de formulações em português e de execução de funções importadas.
+- Adicionado workflow de publicação por tag, com testes, construção de wheel, instalação isolada e GitHub Release.
+- A matriz CI do commit de validação executou 126 testes e aprovou Python 3.10–3.13 em Linux, macOS e Windows.
