@@ -126,7 +126,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         casa = self.lexicon.buscar("casa")[0].entrada
         self.assertEqual(len(self.lexicon.sentidos(casa.identificador)), 1)
         self.assertIn("moradia", self.lexicon.sentidos(casa.identificador)[0]["definicao"])
-        self.assertIn("Uma casa oferece abrigo", self.lexicon.contextos(casa.identificador))
+        self.assertIn("Uma casa oferece abrigo", self.lexicon.contextos_do_sentido("0001-n"))
         self.assertGreater(resultado.relacoes_importadas, 0)
         self.assertEqual(self.lexicon.estatisticas()["relacoes"], 1)
 
@@ -192,7 +192,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         fachada = InterpretadorSemantico(interpretador)
         self.assertEqual(len(fachada.analisar_lexico("o rio")), 1)
 
-    def test_migracao_de_esquema_v1_para_v5(self):
+    def test_migracao_de_esquema_v1_para_v6(self):
         self.lexicon.fechar()
         self.db_path.unlink(missing_ok=True)
         conexao = sqlite3.connect(self.db_path)
@@ -243,7 +243,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         migrado = Lexicon(self.db_path)
         try:
             self.assertEqual(
-                migrado._db.execute("PRAGMA user_version").fetchone()[0], 5
+                migrado._db.execute("PRAGMA user_version").fetchone()[0], 6
             )
             entrada = migrado.buscar("casa")[0].entrada
             self.assertEqual(entrada.licenca, "MIT")
@@ -337,7 +337,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
             ]
             delta = ("".join(json.dumps(item) + "\n" for item in operacoes)).encode()
             manifesto = {
-                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 6, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             chave = Ed25519PrivateKey.generate()
@@ -378,7 +378,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 "lemma": "nova", "pos": "substantivo",
             }) + "\n").encode()
             manifesto = {
-                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 6, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             chave = Ed25519PrivateKey.generate()
@@ -415,7 +415,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 "op": "operacao_inexistente", "source": "base",
             }) + "\n").encode()
             manifesto = {
-                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 6, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             chave = Ed25519PrivateKey.generate()
@@ -450,7 +450,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 "version": "2", "url": "https://example.org", "attribution": "Crédito",
             }
             manifesto = {
-                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "schema_version": 6, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
             }
             pacote = self._pacote(root, chave, delta, manifesto, corromper_assinatura=True)
