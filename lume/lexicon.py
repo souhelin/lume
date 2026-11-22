@@ -249,6 +249,40 @@ class Lexicon:
                     )
             self._limpar_cache()
 
+    def adicionar_relacao(
+        self, origem_id: str, destino_id: str, tipo: str, fonte_id: str
+    ) -> None:
+        """Registra uma relação tipada entre duas entradas já existentes."""
+        if not tipo.strip():
+            raise ValueError("o tipo da relação não pode ser vazio")
+        with self._lock, self._db:
+            fonte = self._db.execute(
+                "SELECT verificada FROM fontes WHERE id=?", (fonte_id,)
+            ).fetchone()
+            if fonte is None or not fonte["verificada"]:
+                raise ValueError("a fonte da relação precisa estar verificada")
+            ids = self._db.execute(
+                "SELECT id FROM entradas WHERE id IN (?, ?)",
+                (origem_id, destino_id),
+            ).fetchall()
+            if len({row["id"] for row in ids}) != 2:
+                raise ValueError("as duas entradas da relação precisam existir")
+            self._db.execute(
+                """
+                INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
+                VALUES (?, ?, ?, ?)
+                """,
+                (origem_id, destino_id, tipo, fonte_id),
+            )
+
+    def contextos(self, identificador: str) -> tuple[str, ...]:
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT contexto FROM contextos WHERE entrada_id=? ORDER BY contexto",
+                (identificador,),
+            ).fetchall()
+            return tuple(row["contexto"] for row in rows)
+
     def _entrada_da_linha(self, row: sqlite3.Row) -> EntradaLexical:
         return EntradaLexical(
             row["id"], row["lema"], row["classe"], row["definicao"],
