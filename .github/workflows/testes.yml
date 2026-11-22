@@ -74,3 +74,27 @@ jobs:
         run: |
           python scripts/testar_bases_reais.py \
             /tmp/words.ttl /tmp/synsets.ttl /tmp/wordsenses.ttl /tmp/relations.ttl
+
+  fserb-real:
+    name: Integração com snapshot completo fserb/pt-br
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar pacote
+        run: python -m pip install .
+      - name: Baixar snapshot público fixado
+        run: |
+          base=https://raw.githubusercontent.com/fserb/pt-br/93ba2a6f3b2f85262fba72df09d448c6bb2fa50a
+          curl --fail --location --retry 3 "$base/lexico" --output /tmp/lexico
+          curl --fail --location --retry 3 "$base/conjuga%C3%A7%C3%B5es" --output /tmp/conjugacoes
+          curl --fail --location --retry 3 "$base/listas/verbos" --output /tmp/verbos
+          curl --fail --location --retry 3 "$base/icf" --output /tmp/icf
+      - name: Importar e validar base fserb completa
+        run: |
+          python scripts/testar_fserb_real.py \
+            /tmp/lexico /tmp/conjugacoes /tmp/verbos /tmp/icf
