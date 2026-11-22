@@ -76,32 +76,32 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         sentidos = self.root / "wordsenses.ttl"
         relacoes = self.root / "relations.ttl"
         prefixos = (
-            "@prefix own-pt: <https://w3id.org/own/own-pt/instances/> .\\n"
-            "@prefix owns: <https://w3id.org/own/schema/> .\\n"
+            "@prefix own-pt: <https://w3id.org/own/own-pt/instances/> .\n"
+            "@prefix owns: <https://w3id.org/own/schema/> .\n"
         )
         palavras.write_text(
             prefixos +
-            'own-pt:word-casa-n a owns:Word ; owns:lemma "casa"@pt ; owns:pos "n" .\\n'
-            'own-pt:word-lar-n a owns:Word ; owns:lemma "lar"@pt ; owns:pos "n" .\\n'
-            'own-pt:wordsense-0001-n-1 owns:word own-pt:word-casa-n .\\n'
-            'own-pt:wordsense-0002-n-1 owns:word own-pt:word-lar-n .\\n',
+            'own-pt:word-casa-n a owns:Word ; owns:lemma "casa"@pt ; owns:pos "n" .\n'
+            'own-pt:word-lar-n a owns:Word ; owns:lemma "lar"@pt ; owns:pos "n" .\n'
+            'own-pt:wordsense-0001-n-1 owns:word own-pt:word-casa-n .\n'
+            'own-pt:wordsense-0002-n-1 owns:word own-pt:word-lar-n .\n',
             encoding="utf-8",
         )
         synsets.write_text(
             prefixos +
-            'own-pt:synset-0001-n a owns:NounSynset ; owns:synsetId "0001-n" ; owns:gloss "moradia"@pt .\\n'
-            'own-pt:synset-0002-n a owns:NounSynset ; owns:synsetId "0002-n" ; owns:gloss "habitação"@pt .\\n',
+            'own-pt:synset-0001-n a owns:NounSynset ; owns:synsetId "0001-n" ; owns:gloss "moradia"@pt .\n'
+            'own-pt:synset-0002-n a owns:NounSynset ; owns:synsetId "0002-n" ; owns:gloss "habitação"@pt .\n',
             encoding="utf-8",
         )
         sentidos.write_text(
             prefixos +
-            'own-pt:synset-0001-n owns:containsWordSense own-pt:wordsense-0001-n-1 .\\n'
-            'own-pt:synset-0002-n owns:containsWordSense own-pt:wordsense-0002-n-1 .\\n',
+            'own-pt:synset-0001-n owns:containsWordSense own-pt:wordsense-0001-n-1 .\n'
+            'own-pt:synset-0002-n owns:containsWordSense own-pt:wordsense-0002-n-1 .\n',
             encoding="utf-8",
         )
         relacoes.write_text(
             prefixos +
-            'own-pt:synset-0001-n owns:similarTo own-pt:synset-0002-n .\\n',
+            'own-pt:synset-0001-n owns:similarTo own-pt:synset-0002-n .\n',
             encoding="utf-8",
         )
         resultado = importar_openwordnet_ttl(
