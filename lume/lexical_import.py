@@ -346,16 +346,24 @@ def importar_openwordnet_ttl(
 
     grafo = Graph()
     grafo.parse(str(arquivo_synsets), format="turtle")
-    metadados_sentidos: dict[object, dict[str, str]] = {}
+    metadados_sentidos: dict[object, dict[str, object]] = {}
     for sujeito, predicado, objeto in grafo:
         nome = _local_name(predicado)
         if nome == "synsetId":
             metadados_sentidos.setdefault(sujeito, {})["id"] = str(objeto)
         elif nome == "gloss":
-            item = metadados_sentidos.setdefault(sujeito, {})
+            idioma = getattr(objeto, "language", None)
             gloss = str(objeto).strip()
-            if gloss:
-                item["gloss"] = (item.get("gloss", "") + ("; " if item.get("gloss") else "") + gloss)
+            if gloss and (idioma is None or idioma.lower().startswith("pt")):
+                item = metadados_sentidos.setdefault(sujeito, {})
+                atual = str(item.get("gloss", ""))
+                item["gloss"] = atual + ("; " if atual else "") + gloss
+        elif nome == "example":
+            idioma = getattr(objeto, "language", None)
+            exemplo = str(objeto).strip()
+            if exemplo and (idioma is None or idioma.lower().startswith("pt")):
+                item = metadados_sentidos.setdefault(sujeito, {})
+                item.setdefault("examples", []).append(exemplo)
         elif nome == "type":
             tipo = _local_name(objeto)
             classe = {
@@ -386,7 +394,9 @@ def importar_openwordnet_ttl(
         )
         id_sentido_por_uri[uri] = identificador
         classes_por_sentido[identificador] = classe
-        glossas_por_sentido[identificador] = dados.get("gloss")
+        glossas_por_sentido[identificador] = (
+            str(dados["gloss"]) if dados.get("gloss") else None
+        )
         membros: list[str] = []
         for uri_sense in membros_uri.get(uri, ()):
             uri_palavra = palavra_do_sentido.get(uri_sense)
@@ -431,6 +441,26 @@ def importar_openwordnet_ttl(
                 (identificador, entrada_id, ordem)
                 for identificador, membros in membros_por_sentido.items()
                 for ordem, entrada_id in enumerate(membros)
+            ),
+        )
+        lexicon._db.executemany(
+            """
+            INSERT INTO contextos
+                (entrada_id, contexto, fonte_id, licenca, versao_fonte)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(entrada_id, contexto, fonte_id) DO UPDATE SET
+                licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
+            """,
+            (
+                (
+                    entrada_id, exemplo, fonte,
+                    fonte_meta["licenca"], fonte_meta["versao"],
+                )
+                for uri, dados in metadados_sentidos.items()
+                for identificador in (id_sentido_por_uri.get(uri),)
+                if identificador in membros_por_sentido
+                for entrada_id in membros_por_sentido[identificador]
+                for exemplo in dados.get("examples", [])
             ),
         )
         lexicon._limpar_cache()
