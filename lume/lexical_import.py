@@ -266,3 +266,223 @@ def importar_openwordnet_tsv(
         fonte, lidos, len(entradas), sentidos_importados=len(membros_por_sentido),
         ignorados=ignorados,
     )
+
+
+def _local_name(valor: object) -> str:
+    texto = str(valor)
+    return texto.rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+
+
+def importar_openwordnet_ttl(
+    lexicon: Lexicon, arquivo_palavras: str | Path,
+    arquivo_synsets: str | Path, arquivo_palavras_sentido: str | Path,
+    arquivo_relacoes: str | Path, *, versao: str,
+    confirmar_direitos: bool = False,
+) -> ResultadoImportacao:
+    """Importa OpenWordNet-PT Turtle: lemas, glossas, sentidos e relações.
+
+    Requer rdflib (pip install lume-lang[rdf]). Todos os arquivos são locais.
+    """
+    try:
+        from rdflib import Graph
+    except ImportError as erro:
+        raise RuntimeError(
+            "importação Turtle requer o extra opcional: pip install lume-lang[rdf]"
+        ) from erro
+
+    fonte = "openwordnet-pt"
+    _registrar_fonte(
+        lexicon, identificador=fonte, nome="OpenWordNet-PT (dados Turtle oficiais)",
+        licenca="CC BY 4.0",
+        versao=versao, url="https://github.com/own-pt/openWordnet-PT",
+        atribuicao=(
+            "OpenWordNet-PT; atribuir aos autores conforme README upstream; "
+            "indicar modificações e manter referência à CC BY 4.0."
+        ),
+        confirmar_direitos=confirmar_direitos,
+    )
+    pos_map = {
+        "n": "substantivo", "v": "verbo", "a": "adjetivo",
+        "s": "adjetivo", "r": "adverbio",
+    }
+
+    grafo = Graph()
+    grafo.parse(str(arquivo_palavras), format="turtle")
+    dados_palavras: dict[object, dict[str, str]] = {}
+    palavra_do_sentido: dict[object, object] = {}
+    for sujeito, predicado, objeto in grafo:
+        nome = _local_name(predicado)
+        if nome == "lemma":
+            dados_palavras.setdefault(sujeito, {})["lema"] = str(objeto)
+        elif nome == "pos":
+            dados_palavras.setdefault(sujeito, {})["pos"] = str(objeto)
+        elif nome == "word":
+            palavra_do_sentido[sujeito] = objeto
+    del grafo
+
+    id_por_uri: dict[object, str] = {}
+    lote: list[tuple[str, str, str, str | None]] = []
+    for uri, dados in dados_palavras.items():
+        lema = dados.get("lema", "").strip()
+        classe = pos_map.get(dados.get("pos", ""))
+        if not lema or not classe:
+            continue
+        identificador = _id(fonte, classe, lema)
+        id_por_uri[uri] = identificador
+        lote.append((identificador, lema, classe, None))
+    _gravar_entradas(lexicon, fonte, lote)
+
+    grafo = Graph()
+    grafo.parse(str(arquivo_synsets), format="turtle")
+    metadados_sentidos: dict[object, dict[str, str]] = {}
+    for sujeito, predicado, objeto in grafo:
+        nome = _local_name(predicado)
+        if nome == "synsetId":
+            metadados_sentidos.setdefault(sujeito, {})["id"] = str(objeto)
+        elif nome == "gloss":
+            item = metadados_sentidos.setdefault(sujeito, {})
+            gloss = str(objeto).strip()
+            if gloss:
+                item["gloss"] = (item.get("gloss", "") + ("; " if item.get("gloss") else "") + gloss)
+        elif nome == "type":
+            tipo = _local_name(objeto)
+            classe = {
+                "NounSynset": "substantivo", "VerbSynset": "verbo",
+                "AdjectiveSynset": "adjetivo", "AdjectiveSatelliteSynset": "adjetivo",
+                "AdverbSynset": "adverbio",
+            }.get(tipo)
+            if classe:
+                metadados_sentidos.setdefault(sujeito, {})["classe"] = classe
+    del grafo
+
+    grafo = Graph()
+    grafo.parse(str(arquivo_palavras_sentido), format="turtle")
+    membros_uri: dict[object, list[object]] = {}
+    for sujeito, predicado, objeto in grafo:
+        if _local_name(predicado) == "containsWordSense":
+            membros_uri.setdefault(sujeito, []).append(objeto)
+    del grafo
+
+    id_sentido_por_uri: dict[object, str] = {}
+    membros_por_sentido: dict[str, list[str]] = {}
+    glossas_por_sentido: dict[str, str | None] = {}
+    classes_por_sentido: dict[str, str] = {}
+    for uri, dados in metadados_sentidos.items():
+        identificador = dados.get("id") or _local_name(uri).removeprefix("synset-")
+        classe = dados.get("classe") or pos_map.get(
+            identificador.rsplit("-", 1)[-1], "desconhecida"
+        )
+        id_sentido_por_uri[uri] = identificador
+        classes_por_sentido[identificador] = classe
+        glossas_por_sentido[identificador] = dados.get("gloss")
+        membros: list[str] = []
+        for uri_sense in membros_uri.get(uri, ()):
+            uri_palavra = palavra_do_sentido.get(uri_sense)
+            entrada_id = id_por_uri.get(uri_palavra)
+            if entrada_id and entrada_id not in membros:
+                membros.append(entrada_id)
+        if membros:
+            membros_por_sentido[identificador] = membros
+
+    with lexicon._lock, lexicon._db:
+        fonte_meta = lexicon._db.execute(
+            "SELECT licenca, versao FROM fontes WHERE id=?", (fonte,)
+        ).fetchone()
+        lexicon._db.executemany(
+            """
+            INSERT INTO sentidos(id, fonte_id, classe, definicao, licenca, versao_fonte)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                fonte_id=excluded.fonte_id, classe=excluded.classe,
+                definicao=excluded.definicao, licenca=excluded.licenca,
+                versao_fonte=excluded.versao_fonte
+            """,
+            (
+                (
+                    identificador, fonte, classes_por_sentido[identificador],
+                    glossas_por_sentido.get(identificador),
+                    fonte_meta["licenca"], fonte_meta["versao"],
+                )
+                for identificador in membros_por_sentido
+            ),
+        )
+        for identificador in membros_por_sentido:
+            lexicon._db.execute(
+                "DELETE FROM sentido_entradas WHERE sentido_id=?", (identificador,)
+            )
+        lexicon._db.executemany(
+            """
+            INSERT OR IGNORE INTO sentido_entradas(sentido_id, entrada_id, ordem)
+            VALUES (?, ?, ?)
+            """,
+            (
+                (identificador, entrada_id, ordem)
+                for identificador, membros in membros_por_sentido.items()
+                for ordem, entrada_id in enumerate(membros)
+            ),
+        )
+        lexicon._limpar_cache()
+
+    membros_por_uri = {
+        uri: membros_por_sentido.get(identificador, [])
+        for uri, identificador in id_sentido_por_uri.items()
+    }
+    for uri, membros in membros_uri.items():
+        if uri not in membros_por_uri:
+            continue
+        for uri_sense in membros:
+            uri_palavra = palavra_do_sentido.get(uri_sense)
+            entrada_id = id_por_uri.get(uri_palavra)
+            if entrada_id and entrada_id not in membros_por_uri[uri]:
+                membros_por_uri[uri].append(entrada_id)
+
+    grafo = Graph()
+    grafo.parse(str(arquivo_relacoes), format="turtle")
+    relacoes_lote: list[tuple[str, str, str, str]] = []
+    total_relacoes = 0
+    for sujeito, predicado, objeto in grafo:
+        tipo = _local_name(predicado)
+        if tipo in {"type", "label"}:
+            continue
+        origem = membros_por_uri.get(sujeito)
+        destino = membros_por_uri.get(objeto)
+        if origem is None:
+            uri_palavra = palavra_do_sentido.get(sujeito)
+            entrada_id = id_por_uri.get(uri_palavra)
+            origem = [entrada_id] if entrada_id else []
+        if destino is None:
+            uri_palavra = palavra_do_sentido.get(objeto)
+            entrada_id = id_por_uri.get(uri_palavra)
+            destino = [entrada_id] if entrada_id else []
+        for origem_id in origem:
+            for destino_id in destino:
+                if origem_id and destino_id and origem_id != destino_id:
+                    relacoes_lote.append((origem_id, destino_id, tipo, fonte))
+        if len(relacoes_lote) >= 5000:
+            with lexicon._lock, lexicon._db:
+                lexicon._db.executemany(
+                    """
+                    INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    relacoes_lote,
+                )
+            total_relacoes += len(relacoes_lote)
+            relacoes_lote.clear()
+    if relacoes_lote:
+        with lexicon._lock, lexicon._db:
+            lexicon._db.executemany(
+                """
+                INSERT OR IGNORE INTO relacoes(origem_id, destino_id, tipo, fonte_id)
+                VALUES (?, ?, ?, ?)
+                """,
+                relacoes_lote,
+            )
+        total_relacoes += len(relacoes_lote)
+    del grafo
+    with lexicon._lock:
+        lexicon._limpar_cache()
+    return ResultadoImportacao(
+        fonte, len(dados_palavras), len(lote),
+        sentidos_importados=len(membros_por_sentido), ignorados=total_relacoes,
+    )
