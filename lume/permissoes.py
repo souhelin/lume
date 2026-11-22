@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from urllib.parse import urlsplit
+from typing import Callable
 
 from .erros import ErroExecucao
 
@@ -32,7 +33,7 @@ class PermissoesRede:
     def revogar_host(self, host: str) -> None:
         self._hosts = self._hosts - {self._normalizar_host(host)}
 
-    def autorizar_url(self, url: str) -> str:
+    def autorizar_url(self, url: str, ao_solicitar: Callable[[str], None] | None = None) -> str:
         try:
             partes = urlsplit(url)
             host = (partes.hostname or "").rstrip(".").casefold()
@@ -43,6 +44,8 @@ class PermissoesRede:
             raise ErroExecucao("somente endereços HTTP e HTTPS são permitidos")
         if not host or partes.username is not None or partes.password is not None:
             raise ErroExecucao("o endereço precisa conter um host válido e não pode incluir credenciais")
+        if ao_solicitar is not None:
+            ao_solicitar(host)
         if host not in self._hosts:
             raise ErroExecucao(
                 f"acesso externo bloqueado para '{host}'; autorize explicitamente esse host "
