@@ -163,15 +163,15 @@ class TestesLume(unittest.TestCase):
             interpretador.executar(analisar_sintaxe('definir itens como [1]\nadicionar(itens, 2)'))
 
     def test_atribuicao_atualiza_variavel_existente(self) -> None:
-        fonte = "definir contador como 1\\ncontador = contador + 1\\nmostrar contador"
+        fonte = "definir contador como 1\ncontador = contador + 1\nmostrar contador"
         self.assertEqual(self.executar(fonte), ["2"])
 
     def test_atribuicao_dentro_de_condicional_e_laco(self) -> None:
-        fonte = "definir total como 0\\nse verdadeiro então\\n total = 5\\nfim\\npara cada n em intervalo(1, 2) faça\\n total = total + n\\nfim\\nmostrar total"
+        fonte = "definir total como 0\nse verdadeiro então\n total = 5\nfim\npara cada n em intervalo(1, 2) faça\n total = total + n\nfim\nmostrar total"
         self.assertEqual(self.executar(fonte), ["8"])
 
     def test_atribuicao_dentro_de_funcao_altera_variavel_externa(self) -> None:
-        fonte = "definir valor como 1\\nfunção atualizar() faça\\n valor = 9\\nfim\\natualizar()\\nmostrar valor"
+        fonte = "definir valor como 1\nfunção atualizar() faça\n valor = 9\nfim\natualizar()\nmostrar valor"
         self.assertEqual(self.executar(fonte), ["9"])
 
     def test_atribuicao_de_nome_inexistente_falha(self) -> None:
