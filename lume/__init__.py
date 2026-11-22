@@ -16,6 +16,13 @@ from .semantica import (
     compilar_semantico,
     detectar_sintaxe_semantica,
 )
+from .desambiguacao import CandidatoSentido, DesambiguadorContextual, ResultadoToken
+from .lexical_import import (
+    ResultadoImportacao,
+    importar_fserb_lexico,
+    importar_fserb_conjugacoes,
+    importar_openwordnet_tsv,
+)
 from .lexicon import (
     CorrespondenciaLexical,
     EntradaLexical,
@@ -37,6 +44,13 @@ __all__ = [
     "EntradaLexical",
     "CorrespondenciaLexical",
     "normalizar_forma",
+    "DesambiguadorContextual",
+    "CandidatoSentido",
+    "ResultadoToken",
+    "ResultadoImportacao",
+    "importar_fserb_lexico",
+    "importar_fserb_conjugacoes",
+    "importar_openwordnet_tsv",
     "PermissoesRede",
     "formatar_fonte",
     "ErroLume",
