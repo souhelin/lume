@@ -52,9 +52,14 @@ def aplicar_pacote_assinado(
         raise ValueError("chave pública Ed25519 precisa ter exatamente 32 bytes")
 
     with zipfile.ZipFile(arquivo_pacote, "r") as pacote_zip:
-        nomes = set(pacote_zip.namelist())
-        if nomes != {"manifest.json", "manifest.sig", "delta.jsonl"}:
+        infos = {info.filename: info for info in pacote_zip.infolist()}
+        if set(infos) != {"manifest.json", "manifest.sig", "delta.jsonl"}:
             raise ValueError("pacote contém arquivos ausentes ou inesperados")
+        limites = {"manifest.json": 1_000_000, "manifest.sig": 1024, "delta.jsonl": 100_000_000}
+        if any(infos[nome].file_size > limite for nome, limite in limites.items()):
+            raise ValueError("pacote excede os limites de tamanho permitidos")
+        if sum(info.file_size for info in infos.values()) > 101_001_024:
+            raise ValueError("pacote excede o tamanho total permitido")
         manifesto_bytes = pacote_zip.read("manifest.json")
         assinatura_texto = pacote_zip.read("manifest.sig").strip()
         delta = pacote_zip.read("delta.jsonl")
@@ -76,6 +81,8 @@ def aplicar_pacote_assinado(
         for chave in obrigatorios
     ):
         raise ValueError("metadados da fonte incompletos")
+    if not fonte["url"].startswith("https://"):
+        raise ValueError("a URL de procedência da fonte precisa usar HTTPS")
 
     caminho.parent.mkdir(parents=True, exist_ok=True)
     fd, nome_stage = tempfile.mkstemp(
@@ -108,6 +115,8 @@ def aplicar_pacote_assinado(
             for numero, linha in enumerate(delta.decode("utf-8").splitlines(), start=1):
                 if not linha.strip():
                     continue
+                if len(linha) > 1_000_000:
+                    raise ValueError(f"operação excessivamente grande na linha {numero}")
                 try:
                     item = json.loads(linha)
                 except json.JSONDecodeError as erro:
@@ -132,7 +141,75 @@ def aplicar_pacote_assinado(
                             "DELETE FROM entradas WHERE id=? AND fonte_id=?",
                             (str(item["id"]), fonte["id"]),
                         )
+                        lexicon._db.execute(
+                            """
+                            DELETE FROM sentidos
+                            WHERE fonte_id=? AND NOT EXISTS (
+                                SELECT 1 FROM sentido_entradas
+                                WHERE sentido_entradas.sentido_id=sentidos.id
+                            )
+                            """,
+                            (fonte["id"],),
+                        )
                         lexicon._limpar_cache()
+                elif acao == "upsert_sense":
+                    lexicon.registrar_sentido(
+                        str(item["id"]), fonte["id"], str(item["pos"]),
+                        item.get("definition"),
+                        tuple(str(x) for x in item.get("members", ())),
+                    )
+                elif acao == "delete_sense":
+                    with lexicon._lock, lexicon._db:
+                        lexicon._db.execute(
+                            "DELETE FROM sentidos WHERE id=? AND fonte_id=?",
+                            (str(item["id"]), fonte["id"]),
+                        )
+                elif acao == "upsert_relation":
+                    lexicon.adicionar_relacao(
+                        str(item["origin"]), str(item["destination"]),
+                        str(item["type"]), fonte["id"],
+                    )
+                elif acao == "delete_relation":
+                    with lexicon._lock, lexicon._db:
+                        lexicon._db.execute(
+                            """
+                            DELETE FROM relacoes
+                            WHERE origem_id=? AND destino_id=? AND tipo=? AND fonte_id=?
+                            """,
+                            (
+                                str(item["origin"]), str(item["destination"]),
+                                str(item["type"]), fonte["id"],
+                            ),
+                        )
+                elif acao == "upsert_frequency":
+                    import math
+                    valor = float(item["value"])
+                    if not math.isfinite(valor) or valor < 0:
+                        raise ValueError(f"pontuação inválida na linha {numero}")
+                    forma = str(item["form"])
+                    from .lexicon import normalizar_forma
+                    with lexicon._lock, lexicon._db:
+                        lexicon._db.execute(
+                            """
+                            INSERT INTO frequencias
+                                (forma_normalizada, forma_original, valor, fonte_id, versao_fonte)
+                            VALUES (?, ?, ?, ?, ?)
+                            ON CONFLICT(forma_normalizada, fonte_id) DO UPDATE SET
+                                forma_original=excluded.forma_original, valor=excluded.valor,
+                                versao_fonte=excluded.versao_fonte
+                            """,
+                            (
+                                normalizar_forma(forma), forma, valor,
+                                fonte["id"], fonte["version"],
+                            ),
+                        )
+                elif acao == "delete_frequency":
+                    from .lexicon import normalizar_forma
+                    with lexicon._lock, lexicon._db:
+                        lexicon._db.execute(
+                            "DELETE FROM frequencias WHERE forma_normalizada=? AND fonte_id=?",
+                            (normalizar_forma(str(item["form"])), fonte["id"]),
+                        )
                 else:
                     raise ValueError(f"operação desconhecida na linha {numero}")
                 operacoes += 1
