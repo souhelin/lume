@@ -161,7 +161,7 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         fachada = InterpretadorSemantico(interpretador)
         self.assertEqual(len(fachada.analisar_lexico("o rio")), 1)
 
-    def test_migracao_de_esquema_v1_para_v4(self):
+    def test_migracao_de_esquema_v1_para_v5(self):
         self.lexicon.fechar()
         conexao = sqlite3.connect(self.db_path)
         conexao.execute("PRAGMA user_version = 1")
@@ -273,6 +273,80 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 self.assertEqual(len(atualizado.sentidos(entrada_nova.identificador)), 1)
                 self.assertEqual(atualizado.relacoes(entrada_nova.identificador), (atualizado.buscar("outra")[0].entrada,))
                 self.assertEqual(atualizado.frequencia("nova"), (2.5,))
+
+    def test_atualizacao_preserva_versao_historica_da_entrada(self):
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+        from lume.lexical_update import aplicar_pacote_assinado
+
+        with tempfile.TemporaryDirectory() as pasta:
+            root = Path(pasta)
+            db = root / "lexicon.sqlite3"
+            with Lexicon(db) as lexicon:
+                lexicon.registrar_fonte(
+                    FonteLexical("fonte", "Fonte", "MIT", "1", "https://example.org", "Crédito"),
+                    verificada=True,
+                )
+                lexicon.adicionar_entrada(EntradaLexical(
+                    "antiga", "antiga", "substantivo", None, "fonte", "MIT", "1"
+                ))
+            fonte = {
+                "id": "fonte", "name": "Fonte", "license": "MIT",
+                "version": "2", "url": "https://example.org", "attribution": "Crédito",
+            }
+            delta = (json.dumps({
+                "op": "upsert", "source": "fonte", "id": "nova",
+                "lemma": "nova", "pos": "substantivo",
+            }) + "\\n").encode()
+            manifesto = {
+                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "source": fonte,
+            }
+            chave = Ed25519PrivateKey.generate()
+            pacote = self._pacote(root, chave, delta, manifesto)
+            publica = chave.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+            aplicar_pacote_assinado(db, pacote, publica)
+            with Lexicon(db) as atualizado:
+                antiga = atualizado.buscar("antiga")[0].entrada
+                nova = atualizado.buscar("nova")[0].entrada
+                self.assertEqual(antiga.versao_fonte, "1")
+                self.assertEqual(nova.versao_fonte, "2")
+
+    def test_delta_invalido_faz_rollback_sem_alterar_banco(self):
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+        from lume.lexical_update import aplicar_pacote_assinado
+
+        with tempfile.TemporaryDirectory() as pasta:
+            root = Path(pasta)
+            db = root / "lexicon.sqlite3"
+            with Lexicon(db) as lexicon:
+                lexicon.registrar_fonte(
+                    FonteLexical("base", "Base", "MIT", "1", "https://example.org", "Crédito"),
+                    verificada=True,
+                )
+                lexicon.adicionar_entrada(EntradaLexical(
+                    "fixa", "fixa", "substantivo", None, "base", "MIT", "1"
+                ))
+            fonte = {
+                "id": "base", "name": "Base", "license": "MIT",
+                "version": "2", "url": "https://example.org", "attribution": "Crédito",
+            }
+            delta = (json.dumps({
+                "op": "operacao_inexistente", "source": "base",
+            }) + "\\n").encode()
+            manifesto = {
+                "schema_version": 5, "delta_sha256": hashlib.sha256(delta).hexdigest(),
+                "source": fonte,
+            }
+            chave = Ed25519PrivateKey.generate()
+            pacote = self._pacote(root, chave, delta, manifesto)
+            publica = chave.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+            with self.assertRaisesRegex(ValueError, "operação desconhecida"):
+                aplicar_pacote_assinado(db, pacote, publica)
+            with Lexicon(db) as original:
+                self.assertEqual(original.buscar("fixa")[0].entrada.versao_fonte, "1")
+                self.assertFalse(db.with_suffix(".sqlite3.bak").exists())
 
     def test_assinatura_invalida_nao_altera_banco_ativo(self):
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
