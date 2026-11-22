@@ -2,46 +2,42 @@
 
 ## Separação de responsabilidades
 
-O LUME possui dois níveis relacionados, mas distintos:
+1. **Vocabulário de comandos** (`lume/vocabulario.py`): associa expressões explícitas a intenções executáveis.
+2. **LUME Lexicon** (`lume/lexicon.py`): armazena lemas, classes gramaticais, flexões, sentidos, glossas, relações e procedência.
+3. **Desambiguador contextual** (`lume/desambiguacao.py`): gera e pontua candidatos com evidências locais, sem transformar palavras em comandos.
 
-1. **Vocabulário de comandos** (`lume/vocabulario.py`): reconhece verbos e expressões explicitamente associados a intenções executáveis.
-2. **LUME Lexicon** (`lume/lexicon.py`): armazena lemas, classes gramaticais, flexões, sentidos, relações e procedência.
+Uma palavra presente no Lexicon não se torna automaticamente uma instrução válida. A execução continua dependendo da gramática e das regras semânticas explícitas.
 
-Uma palavra presente no Lexicon não se torna automaticamente uma instrução válida. A execução continua dependendo da gramática e de regras semânticas explícitas.
+## Integração
 
-## Representação
+`Interpretador` recebe uma instância opcional e compartilhável de `Lexicon`. `InterpretadorSemantico` usa essa instância ou aceita outra explicitamente, oferecendo `analisar_lexico(texto)`.
 
-Uma entrada lexical pode conter:
-- identificador estável;
-- lema;
-- classe gramatical;
-- definição opcional e licenciada;
-- fonte, licença e versão;
-- formas flexionadas;
-- relações tipadas;
-- contextos documentados.
+O resultado contém token, candidatos, pontuação, evidências, seleção e indicador de ambiguidade. A análise não reescreve a fonte, AST ou IR e não executa conteúdo lexical.
 
-Uma palavra pode corresponder a mais de uma entrada. A API devolve todas as correspondências, em vez de escolher arbitrariamente um sentido.
+## Estratégia atual
 
-## Desambiguação contextual
+- Tokenização Unicode preservando a forma normalizada.
+- Consulta por lema e formas registradas.
+- Pistas locais simples de classe gramatical (artigos, alguns advérbios e preposições).
+- Pontuação adicional por contextos textuais registrados.
+- Ordenação determinística por pontuação, lema e identificador.
+- Seleção apenas quando há candidato único ou margem mínima suficiente.
+- Ambiguidade preservada quando a evidência é insuficiente.
 
-A API atual não implementa desambiguação automática de sentidos. O caminho de evolução recomendado é:
-
-1. tokenizar a frase preservando posições de origem;
-2. consultar lemas e flexões;
-3. identificar classes gramaticais possíveis;
-4. analisar dependências e papéis sintáticos;
-5. gerar candidatos de sentido;
-6. pontuar candidatos com regras explícitas e evidência local;
-7. preservar múltiplas hipóteses quando a evidência não for suficiente;
-8. rejeitar ou pedir esclarecimento quando a ambiguidade afetar a execução.
-
-Não usar substituição de palavras como interpretação. Não escolher um significado apenas porque ele aparece primeiro no banco.
+As pistas gramaticais são heurísticas locais, não um parser de dependências. Não confundir o resultado com uma solução geral de Word Sense Disambiguation.
 
 ## Exemplo
 
-Em “Abra o arquivo e mostre seu conteúdo”, o analisador precisa reconhecer duas ações e seus argumentos. A relação entre “arquivo” e “conteúdo” depende da estrutura sintática e de uma regra que indique a propriedade do objeto. O Lexicon sozinho não executa essa análise.
+Em “o canto”, o artigo pode favorecer uma entrada substantiva em relação a uma entrada verbal. Em “canto”, sem contexto, as duas leituras devem permanecer candidatas.
 
-## Determinismo
+## Evolução
 
-A mesma entrada, o mesmo contexto e a mesma versão lexical devem produzir os mesmos candidatos e decisões. O banco lexical não deve alterar AST ou IR por efeitos colaterais. As posições da fonte devem ser preservadas nos diagnósticos.
+Para uma compreensão contextual mais ampla, a próxima camada deve integrar:
+1. análise morfológica que relacione flexões a lemas;
+2. análise sintática e papéis dos argumentos;
+3. relações de synset e contexto discursivo;
+4. pontuação com corpus licenciado e avaliação anotada;
+5. limiares calibrados em dados de teste;
+6. esclarecimento quando a ambiguidade alterar a execução.
+
+Não usar substituição de palavras como interpretação. A mesma entrada, contexto e versão lexical devem produzir os mesmos candidatos.
