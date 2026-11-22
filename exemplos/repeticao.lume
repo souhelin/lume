@@ -1,0 +1,7 @@
+definir total como 0
+
+para cada numero em intervalo(1, 5) faça
+    definir total como total + numero
+fim
+
+mostrar "A soma de 1 até 5 é", total

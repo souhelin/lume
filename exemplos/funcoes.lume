@@ -1,0 +1,5 @@
+função dobro(numero) faça
+    retornar numero * 2
+fim
+
+mostrar "O dobro de 21 é", dobro(21)
