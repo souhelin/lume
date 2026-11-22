@@ -160,6 +160,7 @@ def aplicar_pacote_assinado(
                         str(item["id"]), fonte["id"], str(item["pos"]),
                         item.get("definition"),
                         tuple(str(x) for x in item.get("members", ())),
+                        contextos=tuple(str(x) for x in item.get("contexts", ())),
                     )
                 elif acao == "delete_sense":
                     with lexicon._lock, lexicon._db:
