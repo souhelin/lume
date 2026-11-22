@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import unittest
 from unittest.mock import patch
+from urllib.error import URLError
 
 from lume.erros import ErroExecucao
 from lume.permissoes import PermissoesRede
@@ -41,6 +42,16 @@ class TestesPermissoesRede(unittest.TestCase):
                 cliente.requisitar("https://exemplo.com")
             opener.open.assert_not_called()
 
+    def test_falha_de_conexao_vira_erro_da_lume(self):
+        cliente = ClienteRede(PermissoesRede(["exemplo.com"]))
+        with patch.object(cliente._opener, "open", side_effect=URLError("offline")):
+            with self.assertRaisesRegex(ErroExecucao, "conexão"):
+                cliente.requisitar("https://exemplo.com")
+
+    def test_corpo_da_requisicao_tem_limite(self):
+        cliente = ClienteRede(PermissoesRede(["exemplo.com"]))
+        with self.assertRaisesRegex(ErroExecucao, "corpo da requisição"):
+            cliente.requisitar("https://exemplo.com", metodo="POST", corpo="x" * (1_048_577))
     def test_limites_de_configuracao(self):
         with self.assertRaises(ValueError):
             ClienteRede(PermissoesRede(), timeout=100)
