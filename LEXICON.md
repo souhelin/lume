@@ -25,6 +25,8 @@ Os importadores recebem arquivos locais e não fazem downloads:
 
 - `importar_fserb_lexico`: lista lexical, uma palavra por linha. Como o arquivo agregado não informa classe ou definição por linha, essas entradas ficam como `não_classificada`.
 - `importar_fserb_conjugacoes`: lista de formas verbais. O arquivo não fornece o vínculo forma→infinitivo; portanto, as formas são armazenadas como `forma_verbal_sem_lema`, sem inventar uma análise morfológica.
+- `importar_fserb_verbos`: lista de infinitivos/verbos como lemas de classe verbal.
+- `importar_fserb_icf`: pontuações ICF em tabela própria, sem confundi-las com definições lexicais.
 - `importar_openwordnet_ttl`: importa os quatro arquivos Turtle do projeto original OpenWordNet-PT: palavras, synsets, palavras-sentido e relações. Preserva POS, glossas, synsets e relações.
 - `importar_openwordnet_tsv`: aceita a exportação tabular OMW separada; ela contém lemas/synsets, mas não substitui o conjunto Turtle completo.
 
@@ -53,6 +55,8 @@ Para importar arquivos fserb pelo script:
 python scripts/importar_lexicon.py --banco dados/lexicon.sqlite3 \
   --fserb-lexico dados/lexico \
   --fserb-conjugacoes dados/conjugacoes \
+  --fserb-verbos dados/verbos \
+  --fserb-icf dados/icf \
   --confirmar-direitos
 ```
 
@@ -94,7 +98,7 @@ A CI também executa um teste de integração que baixa os quatro arquivos públ
 ## Limites conhecidos
 
 - O arquivo fserb de conjugações não identifica o infinitivo de cada forma; não é correto atribuir lemas por heurística de prefixo.
-- O fserb ICF não é importado nesta versão.
+- O arquivo de conjugações fserb não fornece o vínculo forma→lema; as formas são preservadas sem uma análise morfológica falsa.
 - A desambiguação atual é uma primeira camada de regras, não análise sintática profunda nem WSD estatístico.
 - A análise lexical é consultiva; o tradutor semântico atual ainda reconhece construções por regras explícitas e não converte qualquer frase livre em programa.
 - A inclusão de dados externos exige revisar licença e procedência da versão exata usada.
