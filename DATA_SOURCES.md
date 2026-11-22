@@ -18,7 +18,7 @@ A fonte precisa ser registrada por conjunto e versão. O código MIT do LUME nã
 
 - Repositório: https://github.com/own-pt/openWordnet-PT
 - Licença declarada no README e LICENSE do projeto original: CC BY 4.0.
-- Arquivos usados: `data/own-pt-words.ttl`, `own-pt-synsets.ttl`, `own-pt-wordsenses.ttl` e `own-pt-relations.ttl`.
+- Arquivos usados: `own-pt-words.ttl`, `own-pt-synsets.ttl`, `own-pt-wordsenses.ttl`, `own-pt-relations.ttl`, `own-pt-morphosemantic-links.ttl` e `own-pt-same-as.ttl`.
 - O importador preserva lemas, classe gramatical, glossas, identificadores de synset, associação palavra-sentido e relações semânticas.
 - O histórico do projeto cita Princeton WordNet 3.0, UWN, MENTA, EuroWordNet e glossas candidatas da Wikipédia. Atribuição e proveniência devem acompanhar a versão redistribuída.
 
@@ -54,3 +54,12 @@ Dicio (https://www.dicio.com.br/) está excluído. Não extrair, copiar, importa
 4. Não misturar licenças sem preservar a proveniência.
 5. Manter avisos de copyright e licença junto a qualquer distribuição de dados.
 6. Não tratar ausência de licença como permissão.
+
+
+## Snapshot completo usado pelo instalador
+
+O script `scripts/instalar_bases_lexicais.py` fixa os commits:
+- fserb/pt-br: `93ba2a6f3b2f85262fba72df09d448c6bb2fa50a`
+- OpenWordNet-PT: `264016d5899e6969f6f7cb4f1d75fa06037c1fd7`
+
+Cada arquivo é verificado pelo Git blob SHA-1 antes de ser importado. A verificação detecta alterações no conteúdo do snapshot; não substitui a análise de licença/procedência.
