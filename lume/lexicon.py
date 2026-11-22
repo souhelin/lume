@@ -158,7 +158,22 @@ class Lexicon:
                     WHERE licenca='' OR versao_fonte=''
                     """
                 )
-                self._db.execute("PRAGMA user_version = 3")
+                self._db.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS frequencias (
+                        forma_normalizada TEXT NOT NULL,
+                        forma_original TEXT NOT NULL,
+                        valor REAL NOT NULL,
+                        fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                        versao_fonte TEXT NOT NULL,
+                        PRIMARY KEY (forma_normalizada, fonte_id)
+                    )
+                    """
+                )
+                self._db.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_frequencias_forma ON frequencias(forma_normalizada)"
+                )
+                self._db.execute("PRAGMA user_version = 4")
             return
         with self._db:
             self._db.executescript(
