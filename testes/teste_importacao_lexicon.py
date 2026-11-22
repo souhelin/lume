@@ -149,6 +149,36 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         self.assertTrue(sem_pista.ambiguo)
         self.assertIsNone(sem_pista.selecionado)
 
+    def test_desambiguacao_escolhe_sense_por_glossa_e_membros(self):
+        fonte = FonteLexical(
+            "wordnet-wsd", "WordNet local", "CC BY 4.0", "1",
+            "https://example.org", "Atribuição",
+        )
+        self.lexicon.registrar_fonte(fonte, verificada=True)
+        termos = ("banco", "dinheiro", "conta", "assento", "cadeira")
+        for termo in termos:
+            self.lexicon.adicionar_entrada(EntradaLexical(
+                f"entrada-{termo}", termo, "substantivo", None,
+                "wordnet-wsd", "CC BY 4.0", "1",
+            ))
+        self.lexicon.registrar_sentido(
+            "banco-financeiro", "wordnet-wsd", "substantivo",
+            "instituição financeira que guarda dinheiro e administra contas",
+            ("entrada-banco", "entrada-dinheiro", "entrada-conta"),
+        )
+        self.lexicon.registrar_sentido(
+            "banco-assento", "wordnet-wsd", "substantivo",
+            "móvel ou assento usado para sentar, como uma cadeira",
+            ("entrada-banco", "entrada-assento", "entrada-cadeira"),
+        )
+        desambiguador = DesambiguadorContextual(self.lexicon)
+        isolado = desambiguador.analisar("banco")[0]
+        self.assertTrue(isolado.ambiguo)
+        self.assertEqual(len(isolado.candidatos), 2)
+        contextual = desambiguador.analisar("banco e dinheiro")[0]
+        self.assertFalse(contextual.ambiguo)
+        self.assertEqual(contextual.selecionado.identificador_sentido, "banco-financeiro")
+
     def test_integracao_com_interpretador_semantico(self):
         fonte = FonteLexical(
             "integracao", "Fonte", "MIT", "1", "https://example.org", "Crédito"
