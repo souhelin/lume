@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lume import EntradaLexical, FonteLexical, Lexicon, normalizar_forma
+from lume import EntradaLexical, FonteLexical, Interpretador, Lexicon, normalizar_forma
 
 
 class TestesLexicon(unittest.TestCase):
@@ -122,6 +122,22 @@ class TestesLexicon(unittest.TestCase):
                 self.assertEqual(reaberto.estatisticas()["entradas"], 1)
             finally:
                 reaberto.fechar()
+
+    def test_interpretador_consulta_a_instancia_compartilhada(self):
+        banco = self.criar_banco()
+        try:
+            banco.adicionar_entrada(self.entrada("rio", "rio"))
+            interpretador = Interpretador(lexicon=banco)
+            self.assertEqual(
+                interpretador.consultar_lexico("RIO")[0].entrada.identificador,
+                "rio",
+            )
+        finally:
+            banco.fechar()
+
+    def test_interpretador_sem_lexicon_nao_inventa_resultados(self):
+        interpretador = Interpretador()
+        self.assertEqual(interpretador.consultar_lexico("palavra"), ())
 
     def test_entrada_sem_fonte_e_rejeitada(self):
         banco = Lexicon()
