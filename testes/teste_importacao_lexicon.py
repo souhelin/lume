@@ -192,6 +192,44 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         fachada = InterpretadorSemantico(interpretador)
         self.assertEqual(len(fachada.analisar_lexico("o rio")), 1)
 
+    def test_atualizacao_preserva_relacoes_e_contextos_de_outras_fontes(self):
+        for identificador in ("fonte-a", "fonte-b"):
+            self.lexicon.registrar_fonte(
+                FonteLexical(
+                    identificador, identificador, "MIT", "1",
+                    "https://example.org", "Crédito",
+                ),
+                verificada=True,
+            )
+        self.lexicon.adicionar_entrada(EntradaLexical(
+            "entrada-a", "casa", "substantivo", None,
+            "fonte-a", "MIT", "1",
+        ), contextos=("moradia",))
+        self.lexicon.adicionar_entrada(EntradaLexical(
+            "entrada-b", "lar", "substantivo", None,
+            "fonte-a", "MIT", "1",
+        ))
+        self.lexicon.adicionar_relacao(
+            "entrada-a", "entrada-b", "sinonimo", "fonte-b"
+        )
+        self.lexicon.adicionar_contexto(
+            "entrada-a", "habitação", "fonte-b"
+        )
+
+        self.lexicon.adicionar_entrada(EntradaLexical(
+            "entrada-a", "casa", "substantivo", "local de moradia",
+            "fonte-a", "MIT", "1",
+        ), contextos=("residência",))
+
+        self.assertEqual(
+            self.lexicon.contextos("entrada-a"),
+            ("habitação", "residência"),
+        )
+        self.assertEqual(
+            tuple(item.identificador for item in self.lexicon.relacoes("entrada-a")),
+            ("entrada-b",),
+        )
+
     def test_migracao_de_esquema_v1_para_v6(self):
         self.lexicon.fechar()
         self.db_path.unlink(missing_ok=True)
