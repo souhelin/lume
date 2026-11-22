@@ -8,7 +8,7 @@
 - NFC + casefold, preservando diacríticos.
 - Lemas, classes gramaticais, formas, fontes, licença e versão por registro.
 - Sentidos/synsets independentes dos lemas: uma palavra pode participar de vários sentidos.
-- Glossas, membros de synsets e relações semânticas.
+- Glossas, membros de synsets, exemplos de uso vinculados a cada sentido e relações semânticas.
 - Consulta exata e cache LRU limitado.
 - Importação em lote para reduzir transações e uso de memória.
 - Nenhuma conexão de rede durante consultas ou importação.
