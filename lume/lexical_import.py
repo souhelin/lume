@@ -53,7 +53,7 @@ def _registrar_fonte(
 def _gravar_entradas(
     lexicon: Lexicon, fonte: str, entradas: Iterable[tuple[str, str, str, str | None]],
 ) -> int:
-    """Grava (id, lema, classe) em lote, mantendo o banco em uma transação."""
+    """Grava (id, lema, classe, definição) em lote, mantendo o banco em uma transação."""
     lote = list(entradas)
     if not lote:
         return 0
@@ -119,7 +119,7 @@ def importar_fserb_lexico(
         confirmar_direitos=confirmar_direitos,
     )
     vistos: set[str] = set()
-    lote: list[tuple[str, str, str | None]] = []
+    lote: list[tuple[str, str, str, str | None]] = []
     lidos = importados = ignorados = 0
     for palavra in _linhas(arquivo_lexico):
         lidos += 1
