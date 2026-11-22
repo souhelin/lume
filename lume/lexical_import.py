@@ -19,6 +19,7 @@ class ResultadoImportacao:
     registros_importados: int
     sentidos_importados: int = 0
     ignorados: int = 0
+    relacoes_importadas: int = 0
 
 
 def _linhas(caminho: str | Path) -> Iterator[str]:
@@ -484,5 +485,5 @@ def importar_openwordnet_ttl(
         lexicon._limpar_cache()
     return ResultadoImportacao(
         fonte, len(dados_palavras), len(lote),
-        sentidos_importados=len(membros_por_sentido), ignorados=total_relacoes,
+        sentidos_importados=len(membros_por_sentido), relacoes_importadas=total_relacoes,
     )
