@@ -256,7 +256,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                     "form": "nova", "value": 2.5,
                 },
             ]
-            delta = ("".join(json.dumps(item) + "\\n" for item in operacoes)).encode()
+            delta = ("".join(json.dumps(item) + "\n" for item in operacoes)).encode()
             manifesto = {
                 "schema_version": 4, "delta_sha256": hashlib.sha256(delta).hexdigest(),
                 "source": fonte,
@@ -271,7 +271,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                 self.assertEqual(len(atualizado.buscar("nova")), 1)
                 entrada_nova = atualizado.buscar("nova")[0].entrada
                 self.assertEqual(len(atualizado.sentidos(entrada_nova.identificador)), 1)
-                self.assertEqual(atualizado.relacoes("nova"), (atualizado.buscar("outra")[0].entrada,))
+                self.assertEqual(atualizado.relacoes(entrada_nova.identificador), (atualizado.buscar("outra")[0].entrada,))
                 self.assertEqual(atualizado.frequencia("nova"), (2.5,))
 
     def test_assinatura_invalida_nao_altera_banco_ativo(self):
