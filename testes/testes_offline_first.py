@@ -21,8 +21,19 @@ class TestesOfflineFirst(unittest.TestCase):
     def test_programa_tradicional_executa_sem_rede(self):
         saida = []
         interpretador = Interpretador(saida=saida.append)
-        interpretador.executar(analisar_sintaxe("definir resultado como (20 + 22)\nmostrar resultado\n"))
-        self.assertEqual(saida, ["42"])
+        fonte = (
+            "definir resultado como 0\n"
+            "para cada numero em intervalo(1, 3) faça\n"
+            "    resultado = resultado + numero\n"
+            "fim\n"
+            "se resultado == 6 então\n"
+            "    mostrar resultado\n"
+            "senão\n"
+            "    mostrar 0\n"
+            "fim\n"
+        )
+        interpretador.executar(analisar_sintaxe(fonte))
+        self.assertEqual(saida, ["6"])
         self.assertIsNone(interpretador._cliente_rede)
 
     def test_validador_semantico_reconhece_funcoes_online_sem_executa_las(self):
