@@ -68,11 +68,14 @@ def _gravar_entradas(
         lexicon._db.executemany(
             """
             INSERT OR IGNORE INTO entradas
-                (id, lema, lema_normalizado, classe, definicao, fonte_id)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (id, lema, lema_normalizado, classe, definicao, fonte_id, licenca, versao_fonte)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                (identificador, lema, normalizar_forma(lema), classe, definicao, fonte)
+                (
+                    identificador, lema, normalizar_forma(lema), classe,
+                    definicao, fonte, fonte_meta["licenca"], fonte_meta["versao"]
+                )
                 for identificador, lema, classe, definicao in lote
             ),
         )
@@ -227,12 +230,23 @@ def importar_openwordnet_tsv(
     with lexicon._lock, lexicon._db:
         lexicon._db.executemany(
             """
-            INSERT INTO sentidos(id, fonte_id, classe, definicao)
-            VALUES (?, ?, ?, NULL)
-            ON CONFLICT(id) DO UPDATE SET fonte_id=excluded.fonte_id, classe=excluded.classe
+            INSERT INTO sentidos(id, fonte_id, classe, definicao, licenca, versao_fonte)
+            VALUES (?, ?, ?, NULL, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                fonte_id=excluded.fonte_id, classe=excluded.classe,
+                licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
             """,
             (
-                (synset, fonte, pos_map.get(synset.rsplit("-", 1)[-1][:1], "desconhecida"))
+                (
+                    synset, fonte,
+                    pos_map.get(synset.rsplit("-", 1)[-1][:1], "desconhecida"),
+                    lexicon._db.execute(
+                        "SELECT licenca FROM fontes WHERE id=?", (fonte,)
+                    ).fetchone()[0],
+                    lexicon._db.execute(
+                        "SELECT versao FROM fontes WHERE id=?", (fonte,)
+                    ).fetchone()[0],
+                )
                 for synset in membros_por_sentido
             ),
         )
