@@ -25,9 +25,9 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [x] Integração do front-end semântico à API, CLI e REPL.
 - [x] Testes de vocabulário, equivalência, contexto, ambiguidade, IR e validação.
 - [x] Exemplo executável e documentação dos padrões e limites.
-- [x] Corpus de equivalência semântica para declarações, sinônimos de exibição e representações intermediárias.
+- [ ] Ampliar a gramática semântica com corpus de compatibilidade e especificação formal por padrão.
 - [x] Posições de linha e coluna preservadas em instruções da AST, IR, erros semânticos e erros de execução.
-- [x] Inferência conservadora de tipos em condições, repetições e tratamento de erros; tipos divergentes tornam-se desconhecidos e são verificados em runtime.
+- [ ] Inferência de tipos e fluxo de controle mais completos.
 - [x] Biblioteca padrão separada do executor em módulo interno dedicado.
 - [x] Testes de recuperação de erros e conclusão de blocos multilinha no REPL.
 
@@ -37,7 +37,7 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [x] Leitura e escrita UTF-8 confinadas à raiz do projeto e limitadas a 1 MiB.
 - [x] Tratamento estruturado com tente, capture, finalmente e lance.
 - [x] Formatador de recuo e diagnósticos de linha/coluna na CLI.
-- [x] Guia de início rápido com instalação, exemplos, módulos, arquivos, REPL e exercícios.
+- [ ] Guia completo para iniciantes e tutoriais por projeto.
 
 ## 1.0.0 — Estabilidade
 
@@ -56,3 +56,9 @@ A versão 0.3.0 reúne os recursos marcados como concluídos nesta etapa. A matr
 
 
 O CI constrói wheels nas 12 combinações de sistema operacional e Python; um job dedicado instala o wheel em um ambiente virtual temporário sem depender do código-fonte do checkout.
+
+
+## Publicação
+
+- [x] Workflow de release por tag v* com testes, build do wheel, validação em ambiente isolado e anexação ao GitHub Releases.
+- [ ] Publicar a primeira release estável 1.0.0 após fechar todos os critérios deste roteiro.

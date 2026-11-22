@@ -268,3 +268,8 @@ A biblioteca padrão está isolada em lume/biblioteca.py, separada do núcleo de
 
 
 A integração contínua também constrói o wheel e testa sua instalação em um ambiente virtual temporário, fora da árvore do repositório. Consulte scripts/validar_wheel.py.
+
+
+## Publicação de versões
+
+A publicação é acionada por uma tag v* e executa novamente os testes, constrói o wheel, valida a instalação isolada e anexa o pacote ao GitHub Releases. Nenhuma release é publicada automaticamente a partir de pull requests ou commits comuns.

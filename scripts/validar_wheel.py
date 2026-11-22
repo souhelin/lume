@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import glob
 import os
+import re
 import subprocess
 import tempfile
 import venv
@@ -11,6 +12,11 @@ from pathlib import Path
 
 
 def main() -> int:
+    metadados = Path("pyproject.toml").read_text(encoding="utf-8")
+    versao = re.search(r'(?m)^version\s*=\s*"([^"]+)"', metadados)
+    if versao is None:
+        raise SystemExit("não foi possível ler a versão de pyproject.toml")
+    versao_esperada = versao.group(1)
     rodas = glob.glob(str(Path("dist") / "*.whl"))
     if len(rodas) != 1:
         raise SystemExit(f"esperava exatamente um wheel em dist/, encontrei {len(rodas)}")
@@ -33,7 +39,7 @@ def main() -> int:
             capture_output=True,
             text=True,
         )
-        if "0.3.0" not in resultado.stdout:
+        if versao_esperada not in resultado.stdout:
             raise SystemExit(f"versão inesperada no wheel: {resultado.stdout.strip()}")
         print(resultado.stdout.strip())
     return 0
