@@ -22,7 +22,7 @@ class TesteCLIComLexicon(unittest.TestCase):
             raiz = Path(pasta)
             banco = raiz / "lexicon.sqlite3"
             fonte = raiz / "programa.lume"
-            fonte.write_text("mostre \\"ok\\"\\n", encoding="utf-8")
+            fonte.write_text('mostrar "ok"\n', encoding="utf-8")
             with Lexicon(banco) as lexicon:
                 lexicon.registrar_fonte(
                     FonteLexical(
@@ -46,7 +46,7 @@ class TesteCLIComLexicon(unittest.TestCase):
     def test_caminho_lexical_inexistente_retorna_erro_controlado(self):
         with tempfile.TemporaryDirectory() as pasta:
             fonte = Path(pasta) / "programa.lume"
-            fonte.write_text('mostre "ok"\\n', encoding="utf-8")
+            fonte.write_text('mostrar "ok"\n', encoding="utf-8")
             codigo = executar_arquivo(
                 str(fonte), verificar=True, modo_semantico=True,
                 caminho_lexico=Path(pasta) / "nao-existe" / "lexicon.sqlite3",
