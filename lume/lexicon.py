@@ -15,7 +15,7 @@ from collections import OrderedDict
 from typing import Iterable
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 CACHE_MAXIMO = 512
 
 
@@ -88,6 +88,24 @@ class Lexicon:
                 f"com esta versão da Lume ({SCHEMA_VERSION})"
             )
         if versao == SCHEMA_VERSION:
+            return
+        if versao == 3:
+            with self._db:
+                self._db.executescript(
+                    """
+                    CREATE TABLE IF NOT EXISTS frequencias (
+                        forma_normalizada TEXT NOT NULL,
+                        forma_original TEXT NOT NULL,
+                        valor REAL NOT NULL,
+                        fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                        versao_fonte TEXT NOT NULL,
+                        PRIMARY KEY (forma_normalizada, fonte_id)
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_frequencias_forma
+                        ON frequencias(forma_normalizada);
+                    """
+                )
+                self._db.execute("PRAGMA user_version = 4")
             return
         if versao in (1, 2):
             with self._db:
@@ -190,6 +208,16 @@ class Lexicon:
                     fonte_id TEXT NOT NULL REFERENCES fontes(id),
                     PRIMARY KEY (entrada_id, contexto, fonte_id)
                 );
+                CREATE TABLE IF NOT EXISTS frequencias (
+                    forma_normalizada TEXT NOT NULL,
+                    forma_original TEXT NOT NULL,
+                    valor REAL NOT NULL,
+                    fonte_id TEXT NOT NULL REFERENCES fontes(id),
+                    versao_fonte TEXT NOT NULL,
+                    PRIMARY KEY (forma_normalizada, fonte_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_frequencias_forma
+                    ON frequencias(forma_normalizada);
                 CREATE TABLE IF NOT EXISTS sentidos (
                     id TEXT PRIMARY KEY,
                     fonte_id TEXT NOT NULL REFERENCES fontes(id),
@@ -498,6 +526,22 @@ class Lexicon:
             rows = self._db.execute(consulta, parametros).fetchall()
             return tuple(self._entrada_da_linha(row) for row in rows)
 
+    def frequencia(self, texto: str, fonte_id: str | None = None) -> tuple[float, ...]:
+        """Retorna pontuações de frequência registradas para a forma consultada."""
+        normalizado = normalizar_forma(texto)
+        with self._lock:
+            if fonte_id is None:
+                rows = self._db.execute(
+                    "SELECT valor FROM frequencias WHERE forma_normalizada=? ORDER BY fonte_id",
+                    (normalizado,),
+                ).fetchall()
+            else:
+                rows = self._db.execute(
+                    "SELECT valor FROM frequencias WHERE forma_normalizada=? AND fonte_id=?",
+                    (normalizado, fonte_id),
+                ).fetchall()
+            return tuple(float(row["valor"]) for row in rows)
+
     def integridade(self) -> tuple[str, ...]:
         with self._lock:
             return tuple(row[0] for row in self._db.execute("PRAGMA integrity_check"))
@@ -506,7 +550,7 @@ class Lexicon:
         with self._lock:
             return {
                 tabela: int(self._db.execute(f"SELECT COUNT(*) FROM {tabela}").fetchone()[0])
-                for tabela in ("fontes", "entradas", "formas", "relacoes", "contextos", "sentidos", "sentido_entradas")
+                for tabela in ("fontes", "entradas", "formas", "relacoes", "contextos", "sentidos", "sentido_entradas", "frequencias")
             }
 
     def _limpar_cache(self) -> None:
