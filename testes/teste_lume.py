@@ -136,5 +136,31 @@ class TestesLume(unittest.TestCase):
         self.assertEqual(self.executar('mostrar "a", 2, verdadeiro'), ["a 2 verdadeiro"])
 
 
+    def test_acesso_por_indice_em_lista_e_texto(self) -> None:
+        fonte = 'definir itens como ["a", "b", "c"]\nmostrar itens[0]\nmostrar itens[-1]\nmostrar "Lume"[1]'
+        self.assertEqual(self.executar(fonte), ["a", "c", "u"])
+
+    def test_indice_fora_dos_limites(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "fora dos limites"):
+            self.executar("mostrar [1, 2][4]")
+
+    def test_indice_precisa_ser_inteiro(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "inteiro"):
+            self.executar('mostrar ["a"][0.5]')
+
+    def test_funcoes_de_mutacao_de_lista(self) -> None:
+        fonte = 'definir itens como ["b", "c"]\nadicionar(itens, "d")\ninserir(itens, 0, "a")\nmostrar itens\nmostrar remover(itens, -1)\nmostrar itens'
+        self.assertEqual(self.executar(fonte), ["[a, b, c, d]", "d", "[a, b, c]"])
+
+    def test_funcoes_de_colecao(self) -> None:
+        fonte = 'mostrar contem(["a", "b"], "b")\nmostrar ordenar([3, 1, 2])\nmostrar inverter("lume")\nmostrar juntar(["a", "b"], "-")'
+        self.assertEqual(self.executar(fonte), ["verdadeiro", "[1, 2, 3]", "emul", "a-b"])
+
+    def test_adicionar_respeita_limite_de_lista(self) -> None:
+        interpretador = Interpretador(saida=lambda _texto: None)
+        interpretador.LIMITE_COLECAO = 1
+        with self.assertRaisesRegex(ErroExecucao, "limite"):
+            interpretador.executar(analisar_sintaxe('definir itens como [1]\nadicionar(itens, 2)'))
+
 if __name__ == "__main__":
     unittest.main()

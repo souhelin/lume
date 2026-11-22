@@ -69,7 +69,7 @@ continuar
 
 Precedência, da maior para a menor: agrupamento e chamadas, potência, multiplicação/divisão, soma/subtração, comparação, `e`, `ou`. A potência é associativa à direita. Os operadores `e` e `ou` usam avaliação de curto-circuito.
 
-`+` aceita dois números, dois textos ou duas listas. Comparações ordenadas aceitam dois números ou dois textos do mesmo tipo.
+`+` aceita dois números, dois textos ou duas listas. Listas e textos aceitam leitura por índice com `colecao[indice]`; índices negativos contam a partir do final. Índices fora dos limites geram erro. Acesso por índice não permite atribuição direta. Comparações ordenadas aceitam dois números ou dois textos do mesmo tipo.
 
 ## Identificadores
 
@@ -85,8 +85,8 @@ mostrar "Resultado:", 2 + 2
 
 A entrada usa `perguntar("Mensagem: ")`, que devolve um texto.
 
-A lista atual de funções nativas está no README. Chamadas usam parênteses e argumentos separados por vírgula.
+A biblioteca padrão inclui `adicionar(lista, valor)`, `inserir(lista, indice, valor)`, `remover(lista, indice)`, `contem(colecao, valor)`, `ordenar(lista)`, `inverter(colecao)` e `juntar(lista_de_textos, separador)`, além das conversões e funções descritas no README. Chamadas usam parênteses e argumentos separados por vírgula.
 
 ## Limites da versão inicial
 
-A versão 0.1.0 não possui mapas/dicionários, acesso por índice, propriedades, classes, importação de módulos, manipulação de arquivos, exceções escritas pelo usuário, tipagem estática, interpolação de textos ou sintaxe de bloco em uma única linha. Esses recursos não devem ser presumidos como disponíveis.
+A versão 0.1.0 não possui mapas/dicionários, atribuição por índice, propriedades, classes, importação de módulos, manipulação de arquivos, exceções escritas pelo usuário, tipagem estática, interpolação de textos ou sintaxe de bloco em uma única linha. Esses recursos não devem ser presumidos como disponíveis.

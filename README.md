@@ -117,7 +117,7 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 ## Recursos implementados na versão 0.1.0
 
 - Palavras-chave e identificadores em português, com suporte a acentos e Unicode.
-- Textos, inteiros, decimais, valores lógicos, valor nulo e listas.
+- Textos, inteiros, decimais, valores lógicos, valor nulo e listas com acesso por índice (inclusive índices negativos).
 - Variáveis e operações matemáticas.
 - Comparações com símbolos (`>=`) ou expressões (`maior ou igual a`).
 - Operadores lógicos `e`, `ou` e `não`, com avaliação de curto-circuito.
@@ -125,7 +125,7 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 - Repetições `enquanto` e `para cada`.
 - Funções, parâmetros, retorno e recursão.
 - Entrada por `perguntar(...)` e saída por `mostrar` ou `exibir`.
-- Funções nativas para conversões, listas, intervalos e textos.
+- Funções nativas para conversões, listas, intervalos e textos, incluindo adicionar, inserir, remover, ordenar, inverter, verificar presença e juntar textos.
 - Limite padrão de 100.000 etapas por execução, até 100.000 itens por coleção e limites para operações numéricas.
 - Mensagens de erro em português e verificação de sintaxe pela CLI.
 
@@ -144,7 +144,7 @@ Mais exemplos executáveis estão em [`exemplos/`](exemplos/).
 | `somar(lista)` | Soma os números de uma lista. |
 | `minimo(lista)` / `maximo(lista)` | Menor ou maior elemento de uma lista não vazia. |
 | `arredondar(numero, casas)` | Arredonda um número; casas é opcional. |
-| `maiusculas(texto)` / `minusculas(texto)` | Altera a caixa de um texto. |
+| `maiusculas(texto)` / `minusculas(texto)` | Altera a caixa de um texto. |\n| `adicionar(lista, valor)` | Adiciona um item ao final e devolve o novo tamanho. |\n| `inserir(lista, indice, valor)` | Insere um item em uma posição. |\n| `remover(lista, indice)` | Remove e devolve o item da posição indicada. |\n| `contem(colecao, valor)` | Verifica se um texto ou lista contém um valor. |\n| `ordenar(lista)` | Devolve uma nova lista ordenada. |\n| `inverter(colecao)` | Devolve uma cópia invertida de uma lista ou texto. |\n| `juntar(lista, separador)` | Une uma lista de textos usando um separador. |
 
 ## Verificações
 
