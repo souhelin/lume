@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 import ssl
 
@@ -45,6 +44,8 @@ class ClienteRede:
         cabecalhos: dict[str, str] | None = None,
     ) -> bytes:
         self.permissoes.autorizar_url(url)
+        if not isinstance(metodo, str):
+            raise ErroExecucao("o método HTTP precisa ser um texto")
         metodo = metodo.upper()
         if metodo not in {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"}:
             raise ErroExecucao("método HTTP não permitido")
@@ -56,7 +57,12 @@ class ClienteRede:
             ):
                 raise ErroExecucao("cabeçalhos HTTP precisam ser um dicionário de textos")
         dados = corpo.encode("utf-8") if isinstance(corpo, str) else corpo
-        requisicao = Request(url, data=dados, headers=cabecalhos or {}, method=metodo)
+        if dados is not None and len(dados) > self.limite_resposta:
+            raise ErroExecucao("o corpo da requisição ultrapassa o limite de 1 MiB")
+        try:
+            requisicao = Request(url, data=dados, headers=cabecalhos or {}, method=metodo)
+        except (TypeError, ValueError) as erro:
+            raise ErroExecucao("requisição HTTP inválida") from erro
         try:
             with self._opener.open(requisicao, timeout=self.timeout) as resposta:
                 dados_resposta = resposta.read(self.limite_resposta + 1)
