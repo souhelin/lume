@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -18,6 +19,15 @@ from .lexicon import Lexicon
 
 def _avisar_rede(host: str) -> None:
     print(f"Programa solicitou acesso externo ao host: {host}", file=sys.stderr)
+
+
+def _abrir_lexicon(caminho: str | Path | None) -> Lexicon | None:
+    if caminho is None:
+        return None
+    arquivo = Path(caminho)
+    if not arquivo.is_file():
+        raise FileNotFoundError(f"banco lexical não encontrado: {arquivo}")
+    return Lexicon(arquivo)
 
 
 def criar_parser_argumentos() -> argparse.ArgumentParser:
@@ -69,7 +79,7 @@ def executar_arquivo(
     lexicon = None
     try:
         if caminho_lexico is not None:
-            lexicon = Lexicon(caminho_lexico)
+            lexicon = _abrir_lexicon(caminho_lexico)
         if usar_semantica:
             interpretador = InterpretadorSemantico(
                 Interpretador(
@@ -108,7 +118,7 @@ def executar_arquivo(
     except ErroLume as erro:
         _mostrar_erro(arquivo, fonte, erro)
         return 1
-    except (OSError, ValueError) as erro:
+    except (OSError, ValueError, sqlite3.Error) as erro:
         print(f"Não foi possível abrir o Lexicon '{caminho_lexico}': {erro}", file=sys.stderr)
         return 2
     finally:
