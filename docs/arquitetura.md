@@ -1,43 +1,69 @@
 # Arquitetura técnica
 
-A implementação de referência está dividida em módulos pequenos, sem dependências de terceiros.
+A Lume usa componentes próprios e não depende de bibliotecas externas para interpretar programas. O front-end semântico e o front-end estruturado convergem para operações internas executadas pelo mesmo interpretador.
 
-## Fluxo de execução
+## Fluxo tradicional
 
-1. `lexer.py` lê caracteres Unicode e produz tokens com posição de linha e coluna.
-2. `tokens.py` define a estrutura de cada token.
-3. `parser.py` valida a gramática e constrói os nós definidos em `nos.py`.
-4. `interpretador.py` avalia expressões e executa instruções.
-5. `ambiente.py` mantém variáveis em ambientes encadeados, permitindo escopo local em chamadas de função.
-6. `cli.py` conecta leitura de arquivos, mensagens de erro e execução no terminal.
+1. lexer.py lê caracteres Unicode e produz tokens com posição de linha e coluna.
+2. tokens.py define a estrutura de cada token.
+3. parser.py valida a gramática e constrói os nós definidos em nos.py.
+4. interpretador.py avalia expressões e executa instruções.
+5. ambiente.py mantém variáveis em ambientes encadeados.
+6. cli.py conecta leitura de arquivos, diagnósticos e execução no terminal.
+
+## Fluxo semântico
+
+~~~text
+Texto de entrada
+  → análise léxica
+  → dicionário e reconhecimento de padrões
+  → tradução para formas canônicas
+  → parser e AST
+  → representação intermediária (IR)
+  → validador semântico
+  → conversão da IR para nós executáveis
+  → interpretador comum
+~~~
+
+Os módulos responsáveis são:
+
+- vocabulario.py: registro expansível de expressões, significado, categoria, intenção, operações associadas, relações, regras e ambiguidades.
+- semantica.py: padrões naturais documentados, contexto, compilação, análise de ambiguidades e validador estático.
+- representacao.py: IR independente da frase original e adaptadores entre IR e AST.
+- erros.py: categorias de erro semântico e ambiguidade, além dos erros léxicos, sintáticos e de execução.
+
+A camada semântica não cria código Python e não chama eval ou exec. O vocabulário não executa palavras isoladamente: os padrões reconhecidos viram instruções canônicas; estas são transformadas em IR e validadas antes de alcançar o executor existente.
 
 ## Decisões de projeto
 
-- A análise sintática é independente da execução. `--verificar` pode validar um programa sem executá-lo.
-- A AST usa classes de dados explícitas; não há tradução da fonte para Python.
-- A avaliação não usa `eval`, `exec` ou compilação de texto para código Python.
-- Funções definidas em Lume guardam o ambiente em que foram declaradas (fechamento léxico).
+- A validação é separada da execução. --verificar não executa o programa.
+- A AST usa classes de dados explícitas.
+- A IR representa operações estáveis, como declarar, atribuir, exibir, condicional e enquanto.
+- A semântica é determinística: somente padrões declarados são aceitos. Ambiguidades não são resolvidas por suposição.
+- A análise de tipos é parcial e conservadora; o executor ainda verifica condições dependentes de valores de execução.
 - Nomes são normalizados em Unicode NFC e comparados sem distinção de caixa.
-- O interpretador possui limite configurável de etapas para reduzir o risco de laços intermináveis.
-- Coleções e alguns resultados numéricos possuem limites defensivos.
-- A biblioteca padrão inicial é intencionalmente pequena e implementada no interpretador.
+- O interpretador possui limite configurável de etapas; coleções e alguns resultados numéricos possuem limites defensivos.
+- A gramática anterior permanece disponível e compartilha o mesmo núcleo de execução.
 
 ## Estrutura
 
-```text
+~~~text
 lume/
   ambiente.py       ambientes e variáveis
-  cli.py            interface de terminal
+  cli.py            interface de terminal e seleção do front-end
   erros.py          erros e sinais de controle
-  interpretador.py  avaliação da AST e biblioteca inicial
-  lexer.py           análise de caracteres e tokens
-  nos.py             nós da AST
-  parser.py          análise gramatical
-  tokens.py          estrutura dos tokens
-  __main__.py        execução por python -m lume
-  __init__.py        versão e API pública mínima
-```
+  interpretador.py  execução da AST e biblioteca padrão
+  lexer.py          análise léxica
+  nos.py            nós da AST
+  parser.py         gramática estruturada
+  representacao.py  representação intermediária
+  semantica.py      compilador, contexto e validador semântico
+  tokens.py         estrutura dos tokens
+  vocabulario.py    dicionário semântico expansível
+  __main__.py       execução por python -m lume
+  __init__.py       API pública
+~~~
 
-## Limitações conhecidas
+## Limites conhecidos
 
-O projeto ainda não possui um validador semântico em etapa separada, sistema de módulos, depurador, rastreamento completo da origem dos erros durante a execução, coletor de lixo próprio, bytecode ou compilador nativo. O ambiente de execução usa a memória e o coletor de lixo do Python. Essas limitações devem ser consideradas antes de avaliar desempenho ou segurança em cenários de produção.
+O front-end natural é um conjunto explícito de padrões, não um analisador de português irrestrito. A inferência de tipos é parcial. Ainda não existem sistema de módulos, manipulação de arquivos na linguagem, exceções definidas pelo usuário, depurador, bytecode ou compilador nativo. O runtime de referência usa a memória e o coletor de lixo do Python. Essas limitações devem ser consideradas antes de avaliar desempenho ou segurança em produção.

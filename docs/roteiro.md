@@ -15,14 +15,21 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [ ] Publicar o pacote e binários para plataformas suportadas.
 - [ ] Validar instalação em ambientes limpos Linux, macOS e Windows.
 
-## 0.2.0 — Consistência e ergonomia
+## 0.2.0 — Núcleo semântico e consistência
 
-- [ ] Etapa independente de validação semântica.
-- [ ] Mensagens de erro de execução com linha e coluna.
-- [ ] Testes de compatibilidade da gramática e corpus ampliado de exemplos.
-- [ ] Índices e operações mais completas sobre listas.
+- [x] Dicionário semântico expansível com significados, categorias, intenções, operações, relações e regras.
+- [x] Reconhecimento de padrões naturais com aliases e equivalências determinísticas.
+- [x] Contexto semântico para variáveis, funções e referências pronominais limitadas.
+- [x] Representação intermediária com operações canônicas independente da frase de origem.
+- [x] Validador semântico separado do executor, com diagnósticos em português.
+- [x] Integração do front-end semântico à API, CLI e REPL.
+- [x] Testes de vocabulário, equivalência, contexto, ambiguidade, IR e validação.
+- [x] Exemplo executável e documentação dos padrões e limites.
+- [ ] Ampliar a gramática semântica com corpus de compatibilidade e especificação formal por padrão.
+- [ ] Mensagens de erro de execução com linha e coluna preservadas de ponta a ponta.
+- [ ] Inferência de tipos e fluxo de controle mais completos.
 - [ ] Biblioteca padrão organizada em módulos internos.
-- [ ] REPL com blocos de várias linhas e recuperação de erros.
+- [ ] Testes de recuperação e edição incremental no REPL.
 
 ## 0.3.0 — Programas maiores
 
