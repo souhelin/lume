@@ -50,7 +50,7 @@ def _registrar_fonte(
 
 
 def _gravar_entradas(
-    lexicon: Lexicon, fonte: str, entradas: Iterable[tuple[str, str, str | None]],
+    lexicon: Lexicon, fonte: str, entradas: Iterable[tuple[str, str, str, str | None]],
 ) -> int:
     """Grava (id, lema, classe) em lote, mantendo o banco em uma transação."""
     lote = list(entradas)
