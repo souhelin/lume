@@ -22,6 +22,9 @@ classifiers = [
   "Topic :: Software Development :: Interpreters",
 ]
 
+[project.optional-dependencies]
+updates = ["cryptography>=42"]
+
 [project.scripts]
 lume = "lume.cli:main"
 
