@@ -21,6 +21,8 @@ from .representacao import (
     programa_ir_para_ast, programa_para_ir,
 )
 from .vocabulario import DICIONARIO_PADRAO, DicionarioSemantico, normalizar_termo
+from .desambiguacao import DesambiguadorContextual, ResultadoToken
+from .lexicon import Lexicon
 
 
 IDENTIFICADOR = r"[^\W\d]\w*|_[\w]+"
@@ -35,6 +37,7 @@ FUNCOES_NATIVAS: dict[str, tuple[int, int | None]] = {
     "anexar_arquivo": (2, 2), "existe_arquivo": (1, 1),
     "ordenar": (1, 1), "inverter": (1, 1), "juntar": (2, 2),
     "http_obter": (1, 1), "http_enviar": (2, 2), "baixar": (2, 2),
+    "consultar_lexico": (1, 1), "analisar_lexico": (1, 1),
 }
 TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
     "comprimento": int, "texto": str, "tipo": str, "perguntar": str,
@@ -45,6 +48,7 @@ TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
     "ler_arquivo": str, "escrever_arquivo": type(None),
     "anexar_arquivo": type(None), "existe_arquivo": bool,
     "http_obter": str, "http_enviar": str, "baixar": int,
+    "consultar_lexico": list, "analisar_lexico": list,
 }
 
 
@@ -792,12 +796,23 @@ class InterpretadorSemantico:
     """Fachada de execução com contexto semântico persistente."""
 
     def __init__(self, interpretador: Any | None = None,
-                 dicionario: DicionarioSemantico | None = None) -> None:
+                 dicionario: DicionarioSemantico | None = None,
+                 lexicon: Lexicon | None = None) -> None:
         if interpretador is None:
             from .interpretador import Interpretador
             interpretador = Interpretador()
         self.interpretador = interpretador
+        self.lexicon = lexicon if lexicon is not None else getattr(interpretador, "lexicon", None)
+        self.desambiguador = (
+            DesambiguadorContextual(self.lexicon) if self.lexicon is not None else None
+        )
         self.compilador = CompiladorSemantico(dicionario=dicionario)
+
+    def analisar_lexico(self, texto: str) -> tuple[ResultadoToken, ...]:
+        """Analisa candidatos lexicais sem reescrever ou executar o programa."""
+        if self.desambiguador is None:
+            return ()
+        return self.desambiguador.analisar(texto)
 
     def _sincronizar_contexto(self) -> None:
         """Reconcilia nomes com o ambiente real, inclusive após comandos tradicionais."""

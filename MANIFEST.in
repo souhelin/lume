@@ -3,3 +3,9 @@ include LICENSE
 include CHANGELOG.md
 recursive-include docs *.md
 recursive-include exemplos *.lume
+
+include LEXICON.md
+include DATA_SOURCES.md
+include LICENSES.md
+include SEMANTICS.md
+include UPDATE_SYSTEM.md

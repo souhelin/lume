@@ -180,6 +180,69 @@ Use "lume --semantico programa.lume" para forçar esse front-end ou "lume --trad
 | inverter(colecao) | Devolve uma cópia invertida de uma lista ou texto. |
 | juntar(lista, separador) | Une uma lista de textos usando um separador. |
 
+## LUME Lexicon — vocabulário lexical offline
+
+O LUME inclui uma camada lexical SQLite integrada ao interpretador. Ela separa o vocabulário de comandos da linguagem do léxico geral: uma palavra encontrada no banco não se torna automaticamente um comando executável.
+
+### Construir o banco lexical completo
+
+O repositório não versiona um banco SQLite de centenas de megabytes nem redistribui dados de terceiros sem necessidade. Gere o banco localmente a partir dos snapshots públicos fixados, depois de revisar as licenças:
+
+```bash
+python -m pip install '.[rdf]'
+python scripts/instalar_bases_lexicais.py \
+  --destino dados/lexicon.sqlite3 \
+  --confirmar-direitos
+```
+
+O instalador baixa os arquivos apenas quando chamado explicitamente, valida cada arquivo pelo Git blob SHA-1 e constrói o SQLite. Após a construção, a consulta lexical e a desambiguação funcionam offline. O banco e o arquivo `.licenses.txt` ficam no caminho escolhido. Em dispositivos com pouca memória, gere o banco em um computador e transfira-o.
+
+O snapshot validado na CI contém:
+- fserb/pt-br: 145.744 lemas/lista lexical, 195.751 formas verbais preservadas sem atribuição artificial de infinitivo, 4.022 lemas verbais e 419.486 pontuações ICF.
+- OpenWordNet-PT: 59.211 registros de palavras, 52.670 synsets, 79.489 associações palavra-sentido, 298.155 relações semânticas e 2.821 exemplos vinculados a sentidos.
+- Banco combinado: 400.005 entradas, 419.486 frequências e 5 fontes registradas.
+
+### Uso pela API Python
+
+```python
+from lume import Interpretador, InterpretadorSemantico, Lexicon
+
+with Lexicon("dados/lexicon.sqlite3") as lexicon:
+    interpretador = Interpretador(lexicon=lexicon)
+    semantica = InterpretadorSemantico(interpretador)
+
+    print(interpretador.consultar_lexico("cantar"))
+    print(semantica.analisar_lexico("o banco recebeu dinheiro"))
+```
+
+### Uso pela CLI
+
+Com o banco pronto, passe-o explicitamente ao executar um programa:
+
+```bash
+lume --lexicon dados/lexicon.sqlite3 programa.lume
+lume --lexicon dados/lexicon.sqlite3
+```
+
+O mesmo banco fica disponível no REPL e nas funções nativas `consultar_lexico(texto)` e `analisar_lexico(texto)`. Elas retornam listas de correspondências/evidências e não transformam palavras do dicionário em comandos executáveis. Sem `--lexicon`, essas funções informam que o banco não foi carregado.
+
+### Funcionalidades
+
+- Importadores fserb para léxico, conjugações, lista de verbos e ICF.
+- Importador OpenWordNet-PT Turtle para lemas, classes gramaticais, synsets, glossas, exemplos, relações e ligações morfossêmicas.
+- Armazenamento de sentidos independentes dos lemas, preservando polissemia e procedência por fonte/versão/licença.
+- Desambiguação lexical contextual determinística; quando a evidência não basta, mantém a ambiguidade.
+- Atualização incremental por pacote Ed25519, hash SHA-256, staging SQLite, backup e rollback.
+- Benchmark de latência/throughput, teste de carga com 10 mil entradas e integração CI com os snapshots reais.
+
+A integração lexical é consultiva: não reescreve automaticamente o programa nem transforma frases livres em código. A desambiguação atual usa pistas gramaticais locais, glossas, membros de synset e exemplos; não é compreensão irrestrita de português.
+
+### Licenças e procedência
+
+Dicio permanece excluído. O Corpus Carolina não é importado porque contém documentos com licenças heterogêneas, inclusive restrições não comerciais. fserb/pt-br declara MIT, mas agrega fontes dicionarísticas cuja procedência não está detalhada por registro; revise essa ressalva antes de redistribuir o banco. OpenWordNet-PT declara CC BY 4.0 e exige atribuição. A confirmação do instalador é um aceite do operador, não uma certificação jurídica.
+
+Consulte [LEXICON.md](LEXICON.md), [DATA_SOURCES.md](DATA_SOURCES.md), [LICENSES.md](LICENSES.md), [SEMANTICS.md](SEMANTICS.md) e [UPDATE_SYSTEM.md](UPDATE_SYSTEM.md).
+
 ## Verificações
 
 Execute a suíte de testes com a biblioteca padrão do Python:

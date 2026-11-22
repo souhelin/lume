@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -13,10 +14,20 @@ from .formatador import formatar_fonte
 from .parser import analisar_sintaxe
 from .semantica import InterpretadorSemantico, detectar_sintaxe_semantica
 from .permissoes import PermissoesRede
+from .lexicon import Lexicon
 
 
 def _avisar_rede(host: str) -> None:
     print(f"Programa solicitou acesso externo ao host: {host}", file=sys.stderr)
+
+
+def _abrir_lexicon(caminho: str | Path | None) -> Lexicon | None:
+    if caminho is None:
+        return None
+    arquivo = Path(caminho)
+    if not arquivo.is_file():
+        raise FileNotFoundError(f"banco lexical não encontrado: {arquivo}")
+    return Lexicon(arquivo)
 
 
 def criar_parser_argumentos() -> argparse.ArgumentParser:
@@ -34,6 +45,7 @@ def criar_parser_argumentos() -> argparse.ArgumentParser:
     modo.add_argument("--tradicional", action="store_true",
                       help="usa diretamente a gramática estruturada anterior")
     parser.add_argument("--permitir-rede", action="append", default=[], metavar="HOST", help="autoriza conexões HTTP(S) apenas ao host informado; pode ser repetido")
+    parser.add_argument("--lexicon", metavar="CAMINHO", help="carrega o banco lexical SQLite local para consultas semânticas")
     parser.add_argument("--formatar", action="store_true", help="formata o recuo do arquivo e escreve na saída padrão")
     parser.add_argument("--gravar", action="store_true", help="grava o resultado de --formatar no próprio arquivo")
     parser.add_argument("--versao", action="version", version=f"Lume {__version__}")
@@ -45,6 +57,7 @@ def executar_arquivo(
     verificar: bool = False,
     modo_semantico: bool | None = None,
     hosts_rede_permitidos: list[str] | None = None,
+    caminho_lexico: str | Path | None = None,
 ) -> int:
     arquivo = Path(caminho)
     try:
@@ -63,9 +76,19 @@ def executar_arquivo(
         detectar_sintaxe_semantica(fonte)
         if modo_semantico is None else modo_semantico
     )
+    lexicon = None
     try:
+        if caminho_lexico is not None:
+            lexicon = _abrir_lexicon(caminho_lexico)
         if usar_semantica:
-            interpretador = InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede))
+            interpretador = InterpretadorSemantico(
+                Interpretador(
+                    diretorio_raiz=arquivo.parent,
+                    hosts_rede_permitidos=hosts_rede_permitidos or [],
+                    aviso_rede=_avisar_rede,
+                    lexicon=lexicon,
+                )
+            )
             if verificar:
                 interpretador.verificar(fonte)
                 print(f"Semântica válida: {arquivo}")
@@ -75,14 +98,32 @@ def executar_arquivo(
 
         programa = analisar_sintaxe(fonte)
         if verificar:
-            InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede)).verificar(fonte)
+            InterpretadorSemantico(
+                Interpretador(
+                    diretorio_raiz=arquivo.parent,
+                    hosts_rede_permitidos=hosts_rede_permitidos or [],
+                    aviso_rede=_avisar_rede,
+                    lexicon=lexicon,
+                )
+            ).verificar(fonte)
             print(f"Programa válido: {arquivo}")
             return 0
-        Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede).executar(programa)
+        Interpretador(
+            diretorio_raiz=arquivo.parent,
+            hosts_rede_permitidos=hosts_rede_permitidos or [],
+            aviso_rede=_avisar_rede,
+            lexicon=lexicon,
+        ).executar(programa)
         return 0
     except ErroLume as erro:
         _mostrar_erro(arquivo, fonte, erro)
         return 1
+    except (OSError, ValueError, sqlite3.Error) as erro:
+        print(f"Não foi possível abrir o Lexicon '{caminho_lexico}': {erro}", file=sys.stderr)
+        return 2
+    finally:
+        if lexicon is not None:
+            lexicon.fechar()
 
 
 def formatar_arquivo(caminho: str, gravar: bool = False) -> int:
@@ -131,50 +172,68 @@ def _bloco_incompleto(erro: ErroLume) -> bool:
     )
 
 
-def iniciar_repl(modo_semantico: bool | None = None, hosts_rede_permitidos: list[str] | None = None) -> int:
+def iniciar_repl(
+    modo_semantico: bool | None = None,
+    hosts_rede_permitidos: list[str] | None = None,
+    caminho_lexico: str | Path | None = None,
+) -> int:
     print(f"Lume {__version__} — ambiente interativo")
     print("Digite uma instrução por linha. Use 'sair' para encerrar.")
     print("Blocos podem ocupar várias linhas e terminam com 'fim'.")
-    interpretador = Interpretador(hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede)
-    interpretador_semantico = InterpretadorSemantico(interpretador)
+    lexicon = None
+    try:
+        if caminho_lexico is not None:
+            lexicon = Lexicon(caminho_lexico)
+        interpretador = Interpretador(
+            hosts_rede_permitidos=hosts_rede_permitidos or [],
+            aviso_rede=_avisar_rede,
+            lexicon=lexicon,
+        )
+        interpretador_semantico = InterpretadorSemantico(interpretador)
 
-    while True:
-        linhas: list[str] = []
-        try:
-            linha = input("lume> ")
-            if linha.strip().casefold() in {"sair", "encerrar"}:
+        while True:
+            linhas: list[str] = []
+            try:
+                linha = input("lume> ")
+                if linha.strip().casefold() in {"sair", "encerrar"}:
+                    return 0
+                if not linha.strip():
+                    continue
+                linhas.append(linha)
+
+                while True:
+                    fonte = "\n".join(linhas) + "\n"
+                    usar_semantica = (
+                        detectar_sintaxe_semantica(fonte)
+                        if modo_semantico is None else modo_semantico
+                    )
+                    try:
+                        if usar_semantica:
+                            interpretador_semantico.verificar(fonte)
+                            programa = None
+                        else:
+                            programa = analisar_sintaxe(fonte)
+                        break
+                    except ErroLume as erro:
+                        if not _bloco_incompleto(erro):
+                            raise
+                        linhas.append(input("... "))
+
+                if usar_semantica:
+                    interpretador_semantico.executar(fonte)
+                elif programa is not None:
+                    interpretador.executar(programa)
+            except (EOFError, KeyboardInterrupt):
+                print()
                 return 0
-            if not linha.strip():
-                continue
-            linhas.append(linha)
-
-            while True:
-                fonte = "\n".join(linhas) + "\n"
-                usar_semantica = (
-                    detectar_sintaxe_semantica(fonte)
-                    if modo_semantico is None else modo_semantico
-                )
-                try:
-                    if usar_semantica:
-                        interpretador_semantico.verificar(fonte)
-                        programa = None
-                    else:
-                        programa = analisar_sintaxe(fonte)
-                    break
-                except ErroLume as erro:
-                    if not _bloco_incompleto(erro):
-                        raise
-                    linhas.append(input("... "))
-
-            if usar_semantica:
-                interpretador_semantico.executar(fonte)
-            elif programa is not None:
-                interpretador.executar(programa)
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return 0
-        except ErroLume as erro:
-            print(erro, file=sys.stderr)
+            except ErroLume as erro:
+                print(erro, file=sys.stderr)
+    except (OSError, ValueError) as erro:
+        print(f"Não foi possível abrir o Lexicon '{caminho_lexico}': {erro}", file=sys.stderr)
+        return 2
+    finally:
+        if lexicon is not None:
+            lexicon.fechar()
 
 
 def main(argumentos: list[str] | None = None) -> int:
@@ -194,8 +253,8 @@ def main(argumentos: list[str] | None = None) -> int:
     if not opcoes.arquivo:
         if opcoes.verificar:
             parser.error("informe um arquivo para usar --verificar")
-        return iniciar_repl(modo_semantico, opcoes.permitir_rede)
-    return executar_arquivo(opcoes.arquivo, opcoes.verificar, modo_semantico, opcoes.permitir_rede)
+        return iniciar_repl(modo_semantico, opcoes.permitir_rede, opcoes.lexicon)
+    return executar_arquivo(opcoes.arquivo, opcoes.verificar, modo_semantico, opcoes.permitir_rede, opcoes.lexicon)
 
 
 if __name__ == "__main__":
