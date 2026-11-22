@@ -64,6 +64,9 @@ def main() -> int:
             ))
         ttl = (args.openwordnet_palavras, args.openwordnet_synsets,
                args.openwordnet_palavras_sentido, args.openwordnet_relacoes)
+        extras_ttl = (args.openwordnet_morfosemantico, args.openwordnet_same_as)
+        if any(extras_ttl) and not all(ttl):
+            parser.error("arquivos Turtle extras exigem os quatro arquivos principais")
         if any(ttl):
             if not all(ttl):
                 parser.error("informe os quatro arquivos Turtle do OpenWordNet")
