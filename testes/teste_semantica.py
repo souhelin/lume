@@ -273,6 +273,23 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         self.assertEqual(resultado.contexto_resultante.ultima_variavel, "idade")
 
 
+    def test_contexto_semantico_resolve_dependencias_aninhadas(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            Path(diretorio, "dados.lume").write_text(
+                "crie uma variável chamada idade com valor 18\n", encoding="utf-8"
+            )
+            Path(diretorio, "apoio.lume").write_text(
+                'importar "dados.lume"\natribua 20 a ela\n', encoding="utf-8"
+            )
+            interpretador = InterpretadorSemantico(
+                Interpretador(saida=lambda _texto: None, diretorio_raiz=diretorio)
+            )
+            resultado = interpretador.verificar(
+                'importar "apoio.lume"\nmostre idade'
+            )
+        self.assertEqual(resultado.contexto_resultante.tipos["idade"], int)
+
+
     def test_atribuicao_a_nome_inexistente_e_rejeitada(self) -> None:
         compilador = CompiladorSemantico()
         with self.assertRaisesRegex(ErroSemantico, "não foi declarada"):
