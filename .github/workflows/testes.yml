@@ -70,10 +70,13 @@ jobs:
           curl --fail --location --retry 3 "$base/own-pt-synsets.ttl" --output /tmp/synsets.ttl
           curl --fail --location --retry 3 "$base/own-pt-wordsenses.ttl" --output /tmp/wordsenses.ttl
           curl --fail --location --retry 3 "$base/own-pt-relations.ttl" --output /tmp/relations.ttl
+          curl --fail --location --retry 3 "$base/own-pt-morphosemantic-links.ttl" --output /tmp/morphosemantic.ttl
+          curl --fail --location --retry 3 "$base/own-pt-same-as.ttl" --output /tmp/same-as.ttl
       - name: Importar e validar dados reais
         run: |
           python scripts/testar_bases_reais.py \
-            /tmp/words.ttl /tmp/synsets.ttl /tmp/wordsenses.ttl /tmp/relations.ttl
+            /tmp/words.ttl /tmp/synsets.ttl /tmp/wordsenses.ttl /tmp/relations.ttl \
+            --morfosemantico /tmp/morphosemantic.ttl --same-as /tmp/same-as.ttl
 
   fserb-real:
     name: Integração com snapshot completo fserb/pt-br
