@@ -790,33 +790,57 @@ class InterpretadorSemantico:
                 return contexto
             if arquivo in carregando:
                 raise ErroSemantico(f"ciclo de importação detectado no módulo '{caminho}'")
+            if not arquivo.is_file():
+                raise ErroSemantico(f"módulo não encontrado: '{caminho}'")
             fonte = self.interpretador._ler_arquivo(caminho)
         except ErroExecucao as erro:
             raise ErroSemantico(erro.mensagem, erro.posicao) from erro
 
         carregando.add(arquivo)
         try:
-            contexto_modulo = contexto.copiar()
-            tradutor = TradutorSemantico(self.compilador.dicionario)
-            fonte_normalizada = tradutor.traduzir(fonte, contexto_modulo)
-            arvore = analisar_sintaxe(fonte_normalizada)
-            contexto_modulo = self._validar_importacoes(
-                arvore, contexto_modulo, carregando, carregados
-            )
-            representacao = programa_para_ir(arvore)
-            contexto_resultante = _Validador(contexto_modulo).validar(representacao)
-            carregados.add(arquivo)
-            return contexto_resultante
+            try:
+                contexto_modulo = contexto.copiar()
+                tradutor = TradutorSemantico(self.compilador.dicionario)
+                fonte_normalizada = tradutor.traduzir(fonte, contexto_modulo)
+                arvore = analisar_sintaxe(fonte_normalizada)
+                contexto_modulo = self._validar_importacoes(
+                    arvore, contexto_modulo, carregando, carregados
+                )
+                representacao = programa_para_ir(arvore)
+                contexto_resultante = _Validador(contexto_modulo).validar(representacao)
+                carregados.add(arquivo)
+                return contexto_resultante
+            except ErroLume as erro:
+                local = f"no módulo '{caminho}'"
+                if erro.posicao is not None:
+                    local += f" na linha {erro.posicao.linha}, coluna {erro.posicao.coluna}"
+                raise ErroSemantico(f"{local}: {erro.mensagem}") from erro
         finally:
             carregando.discard(arquivo)
 
     def verificar(self, fonte: str) -> ResultadoCompilacao:
         self._sincronizar_contexto()
         contexto = self.compilador.contexto.copiar()
+        carregando: set[object] = set()
+        carregados: set[object] = set()
+
+        # Pré-carrega símbolos dos imports iniciais para que o tradutor semântico
+        # também consiga resolver referências contextuais a variáveis dos módulos.
+        for linha in fonte.splitlines():
+            texto = linha.strip()
+            if not texto or texto.startswith("#"):
+                continue
+            importacao = re.fullmatch(r"""importar\s+["']([^"']+)["']""", texto, re.IGNORECASE)
+            if not importacao:
+                break
+            contexto = self._validar_modulo(
+                importacao.group(1), contexto, carregando, carregados
+            )
+
         tradutor = TradutorSemantico(self.compilador.dicionario)
         fonte_normalizada = tradutor.traduzir(fonte, contexto)
         arvore = analisar_sintaxe(fonte_normalizada)
-        contexto = self._validar_importacoes(arvore, contexto, set(), set())
+        contexto = self._validar_importacoes(arvore, contexto, carregando, carregados)
         representacao = programa_para_ir(arvore)
         contexto_resultante = _Validador(contexto).validar(representacao)
         return ResultadoCompilacao(representacao, fonte_normalizada, contexto_resultante)
