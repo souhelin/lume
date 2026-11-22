@@ -40,6 +40,7 @@ TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
     "inteiro": int, "decimal": float, "contem": bool,
     "adicionar": int, "inserir": int, "ordenar": list, "juntar": str,
     "intervalo": list, "minimo": None, "maximo": None,
+    "maiusculas": str, "minusculas": str,
     "ler_arquivo": str, "escrever_arquivo": type(None),
     "anexar_arquivo": type(None), "existe_arquivo": bool,
 }
@@ -476,6 +477,58 @@ class _Validador:
         self._bloco(programa.instrucoes, self.contexto, em_funcao=False, nivel_lacos=0)
         return self.contexto
 
+    @staticmethod
+    def _mesclar_fluxo(
+        destino: ContextoSemantico,
+        base: ContextoSemantico,
+        caminhos: list[ContextoSemantico],
+        incluir_novos: bool = False,
+    ) -> None:
+        if not caminhos:
+            return
+        comuns_variaveis = set.intersection(*(set(c.variaveis) for c in caminhos))
+        variaveis = set(base.variaveis)
+        if incluir_novos:
+            variaveis.update(comuns_variaveis - base.variaveis)
+        tipos: dict[str, type | None] = {}
+        for nome in variaveis:
+            valores = [c.tipos.get(nome) for c in caminhos]
+            tipos[nome] = valores[0] if all(t == valores[0] for t in valores) else None
+        comuns_funcoes = set.intersection(*(set(c.funcoes) for c in caminhos))
+        funcoes = dict(base.funcoes)
+        if incluir_novos:
+            for nome in comuns_funcoes - base.funcoes.keys():
+                aridades = [c.funcoes[nome] for c in caminhos]
+                if all(a == aridades[0] for a in aridades):
+                    funcoes[nome] = aridades[0]
+        for nome in base.funcoes:
+            aridades = [c.funcoes.get(nome) for c in caminhos]
+            if any(a != aridades[0] for a in aridades):
+                funcoes.pop(nome, None)
+        destino.variaveis = variaveis
+        destino.tipos = tipos
+        destino.funcoes = funcoes
+        ultimas = [c.ultima_variavel for c in caminhos]
+        destino.ultima_variavel = ultimas[0] if all(v == ultimas[0] for v in ultimas) else base.ultima_variavel
+
+    @staticmethod
+    def _tipo_elemento(expressao: ExpressaoIR, contexto: ContextoSemantico) -> type | None:
+        if expressao.operacao == "literal" and isinstance(expressao.argumentos[0], str):
+            return str
+        if expressao.operacao == "lista":
+            tipos = []
+            for item in expressao.argumentos[0]:
+                if item.operacao != "literal":
+                    return None
+                valor = item.argumentos[0]
+                tipos.append(type(valor) if valor is not None else type(None))
+            return tipos[0] if tipos and all(tipo == tipos[0] for tipo in tipos) else None
+        if expressao.operacao == "chamada":
+            funcao = expressao.argumentos[0]
+            if funcao.operacao == "referencia" and funcao.argumentos[0] == "intervalo":
+                return int
+        return None
+
     def _bloco(
         self,
         instrucoes: tuple[InstrucaoIR, ...],
@@ -526,13 +579,28 @@ class _Validador:
                     raise ErroSemantico("o índice de atribuição precisa ser inteiro")
             elif op == "tentar":
                 base = contexto.copiar()
-                self._bloco(args[0].instrucoes, base, em_funcao, nivel_lacos)
-                captura = contexto.copiar()
-                if args[1]:
-                    captura.variaveis.add(args[1])
-                    captura.tipos[args[1]] = str
-                self._bloco(args[2].instrucoes, captura, em_funcao, nivel_lacos)
-                self._bloco(args[3].instrucoes, contexto.copiar(), em_funcao, nivel_lacos)
+                corpo = base.copiar()
+                self._bloco(args[0].instrucoes, corpo, em_funcao, nivel_lacos)
+                if args[2].instrucoes:
+                    captura = base.copiar()
+                    if args[1]:
+                        captura.variaveis.add(args[1])
+                        captura.tipos[args[1]] = str
+                    self._bloco(args[2].instrucoes, captura, em_funcao, nivel_lacos)
+                    if args[1]:
+                        if args[1] in base.variaveis:
+                            captura.variaveis.add(args[1])
+                            captura.tipos[args[1]] = base.tipos.get(args[1])
+                        else:
+                            captura.variaveis.discard(args[1])
+                            captura.tipos.pop(args[1], None)
+                    self._mesclar_fluxo(contexto, base, [corpo, captura], incluir_novos=True)
+                else:
+                    self._mesclar_fluxo(contexto, base, [corpo], incluir_novos=True)
+                if args[3].instrucoes:
+                    finalizado = contexto.copiar()
+                    self._bloco(args[3].instrucoes, finalizado, em_funcao, nivel_lacos)
+                    self._mesclar_fluxo(contexto, contexto.copiar(), [finalizado], incluir_novos=True)
             elif op == "lancar":
                 tipo = self._expressao(args[0], contexto)
                 if tipo is not None and tipo is not str:
@@ -549,27 +617,30 @@ class _Validador:
                 ramo_falso = base.copiar()
                 self._bloco(args[1].instrucoes, ramo_verdadeiro, em_funcao, nivel_lacos)
                 self._bloco(args[2].instrucoes, ramo_falso, em_funcao, nivel_lacos)
-                # Um nome novo só é garantido após o condicional quando existe
-                # nos dois caminhos possíveis.
-                comuns = ramo_verdadeiro.variaveis & ramo_falso.variaveis
-                for nome in comuns - base.variaveis:
-                    contexto.variaveis.add(nome)
-                    if ramo_verdadeiro.tipos.get(nome) == ramo_falso.tipos.get(nome):
-                        contexto.tipos[nome] = ramo_verdadeiro.tipos.get(nome)
-                    else:
-                        contexto.tipos[nome] = None
+                # Só preserva nomes novos presentes em todos os caminhos;
+                # tipos divergentes passam a desconhecidos e serão verificados em runtime.
+                self._mesclar_fluxo(
+                    contexto, base, [ramo_verdadeiro, ramo_falso], incluir_novos=True
+                )
             elif op == "enquanto":
                 self._expressao(args[0], contexto)
-                self._bloco(args[1].instrucoes, contexto.copiar(), em_funcao, nivel_lacos + 1)
+                base = contexto.copiar()
+                corpo = base.copiar()
+                self._bloco(args[1].instrucoes, corpo, em_funcao, nivel_lacos + 1)
+                # O laço pode executar zero vezes; nomes novos não escapam e
+                # tipos alterados em apenas algumas iterações ficam desconhecidos.
+                self._mesclar_fluxo(contexto, base, [base, corpo], incluir_novos=False)
             elif op == "para_cada":
                 nome, iteravel, corpo = args
                 tipo = self._expressao(iteravel, contexto)
                 if tipo not in (None, list, str, tuple):
                     raise ErroSemantico("'para cada' exige uma lista ou um texto")
-                local = contexto.copiar()
+                base = contexto.copiar()
+                local = base.copiar()
                 local.variaveis.add(nome)
-                local.tipos[nome] = None
+                local.tipos[nome] = self._tipo_elemento(iteravel, contexto)
                 self._bloco(corpo.instrucoes, local, em_funcao, nivel_lacos + 1)
+                self._mesclar_fluxo(contexto, base, [base, local], incluir_novos=False)
             elif op == "declarar_funcao":
                 nome, parametros, corpo = args
                 contexto.funcoes[nome] = len(parametros)

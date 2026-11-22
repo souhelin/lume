@@ -273,6 +273,69 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         self.assertEqual(resultado.contexto_resultante.ultima_variavel, "idade")
 
 
+    def test_equivalencias_semanticas_produzem_mesma_ir(self) -> None:
+        formas = [
+            'crie uma variável chamada idade com valor 18\nmostre idade',
+            'declare uma variável idade e atribua a ela o número 18\nexiba idade',
+            'criar uma variável chamada idade com valor 18\napresente idade',
+        ]
+        programas = [
+            CompiladorSemantico().compilar(fonte).programa.para_dicionario()
+            for fonte in formas
+        ]
+        self.assertEqual(programas[0], programas[1])
+        self.assertEqual(programas[1], programas[2])
+
+    def test_fluxo_condicional_preserva_tipo_comum(self) -> None:
+        resultado = CompiladorSemantico().compilar(
+            'definir valor como 1\n'
+            'se verdadeiro então\nvalor = 2\nsenão\nvalor = 3\nfim'
+        )
+        self.assertIs(resultado.contexto_resultante.tipos["valor"], int)
+
+    def test_funcao_de_um_ramo_nao_escapa_do_condicional(self) -> None:
+        fonte = (
+            'se verdadeiro então\n'
+            'função auxiliar() faça\nretornar 1\nfim\n'
+            'fim\n'
+            'auxiliar()'
+        )
+        with self.assertRaisesRegex(ErroSemantico, "não definida"):
+            CompiladorSemantico().compilar(fonte)
+
+    def test_fluxo_condicional_ambíguo_marca_tipo_desconhecido(self) -> None:
+        resultado = CompiladorSemantico().compilar(
+            'definir valor como 1\n'
+            'se verdadeiro então\nvalor = "texto"\nsenão\nvalor = 3\nfim'
+        )
+        self.assertIsNone(resultado.contexto_resultante.tipos["valor"])
+
+    def test_fluxo_de_repeticao_preserva_tipo_estavel(self) -> None:
+        resultado = CompiladorSemantico().compilar(
+            'definir total como 0\n'
+            'para cada numero em [1, 2, 3] faça\n'
+            'total = total + numero\n'
+            'fim'
+        )
+        self.assertIs(resultado.contexto_resultante.tipos["total"], int)
+
+    def test_fluxo_de_repeticao_ambíguo_marca_tipo_desconhecido(self) -> None:
+        resultado = CompiladorSemantico().compilar(
+            'definir total como 0\n'
+            'enquanto verdadeiro faça\n'
+            'total = "texto"\n'
+            'fim'
+        )
+        self.assertIsNone(resultado.contexto_resultante.tipos["total"])
+
+    def test_fluxo_de_captura_mescla_tipos(self) -> None:
+        resultado = CompiladorSemantico().compilar(
+            'definir estado como 0\n'
+            'tente\nestado = 1\nlance "falha"\n'
+            'capture erro\nestado = 2\nfim'
+        )
+        self.assertIs(resultado.contexto_resultante.tipos["estado"], int)
+
     def test_contexto_semantico_resolve_dependencias_aninhadas(self) -> None:
         with tempfile.TemporaryDirectory() as diretorio:
             Path(diretorio, "dados.lume").write_text(

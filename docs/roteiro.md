@@ -25,9 +25,9 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [x] Integração do front-end semântico à API, CLI e REPL.
 - [x] Testes de vocabulário, equivalência, contexto, ambiguidade, IR e validação.
 - [x] Exemplo executável e documentação dos padrões e limites.
-- [ ] Ampliar a gramática semântica com corpus de compatibilidade e especificação formal por padrão.
+- [x] Corpus de equivalência semântica para declarações, sinônimos de exibição e representações intermediárias.
 - [x] Posições de linha e coluna preservadas em instruções da AST, IR, erros semânticos e erros de execução.
-- [ ] Inferência de tipos e fluxo de controle mais completos.
+- [x] Inferência conservadora de tipos em condições, repetições e tratamento de erros; tipos divergentes tornam-se desconhecidos e são verificados em runtime.
 - [x] Biblioteca padrão separada do executor em módulo interno dedicado.
 - [x] Testes de recuperação de erros e conclusão de blocos multilinha no REPL.
 
@@ -37,7 +37,7 @@ Este roteiro separa o que já existe no repositório do que ainda precisa ser co
 - [x] Leitura e escrita UTF-8 confinadas à raiz do projeto e limitadas a 1 MiB.
 - [x] Tratamento estruturado com tente, capture, finalmente e lance.
 - [x] Formatador de recuo e diagnósticos de linha/coluna na CLI.
-- [ ] Guia completo para iniciantes e tutoriais por projeto.
+- [x] Guia de início rápido com instalação, exemplos, módulos, arquivos, REPL e exercícios.
 
 ## 1.0.0 — Estabilidade
 

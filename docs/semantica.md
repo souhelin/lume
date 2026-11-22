@@ -242,3 +242,8 @@ As instruções estruturadas importar "apoio.lume" e as funções ler_arquivo, e
 
 
 A validação feita por InterpretadorSemantico também resolve módulos locais declarados no início do arquivo. O verificador lê e analisa os módulos sem executar seus efeitos; os módulos continuam sendo executados no ponto da instrução importar durante a execução real.
+
+
+## Inferência conservadora de tipos e fluxo
+
+O validador mantém tipos conhecidos em declarações e atribuições. Em condicionais, repetições e blocos de tratamento, mescla os caminhos possíveis. Se os caminhos produzirem tipos diferentes, o tipo passa a desconhecido e a verificação é adiada para o runtime; a Lume continua sendo dinamicamente tipada. Nomes criados em apenas um ramo ou dentro de uma repetição que pode executar zero vezes não são considerados garantidos fora do bloco.

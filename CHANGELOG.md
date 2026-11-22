@@ -52,3 +52,12 @@
 
 - Adicionado MANIFEST.in para incluir documentação e exemplos em distribuições fonte.
 - Adicionado teste de instalação isolada do wheel na CI.
+
+
+## 0.3.x — Fluxo de tipos
+
+- Mesclagem conservadora de tipos em condicionais, laços e blocos de tratamento de erros.
+- Tipos divergentes entre caminhos são marcados como desconhecidos para verificação em runtime.
+- Funções declaradas em apenas um ramo não ficam visíveis fora do condicional.
+- Inferência do tipo de elemento para listas literais homogêneas e intervalos.
+- Testes de equivalência da IR para formulações semânticas equivalentes.

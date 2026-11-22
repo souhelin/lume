@@ -110,3 +110,8 @@ O front-end semântico reconhece somente padrões naturais documentados em docs/
 ## 11. Independência
 
 A implementação não deve depender de IA, rede, APIs ou execução dinâmica de código Python fornecido pelo programa. A AST, IR e o interpretador são os mecanismos de execução da Lume.
+
+
+## 12. Tipagem dinâmica e análise estática
+
+A Lume é dinamicamente tipada. O validador deve rejeitar incompatibilidades quando os tipos são conhecidos estaticamente. Quando uma expressão ou fluxo pode produzir tipos diferentes, o tipo estático deve ser tratado como desconhecido e a decisão fica para a execução. A análise não deve rejeitar programas válidos apenas porque não consegue provar um tipo; também não deve prometer segurança estática completa.
