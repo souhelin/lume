@@ -52,11 +52,11 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
     def test_openwordnet_preserva_multiplos_synsets_para_mesma_palavra(self):
         arquivo = self.root / "wn-data-por.tab"
         arquivo.write_text(
-            "# OpenWN-PT\\tpor\\turl\\n"
-            "00000001-n\\tlemma\\tbanco\\n"
-            "00000001-n\\tlemma\\tinstituição financeira\\n"
-            "00000002-n\\tlemma\\tbanco\\n"
-            "00000002-n\\tlemma\\tassento\\n",
+            "# OpenWN-PT\\tpor\\turl\n"
+            "00000001-n\\tlemma\\tbanco\n"
+            "00000001-n\\tlemma\\tinstituição financeira\n"
+            "00000002-n\\tlemma\\tbanco\n"
+            "00000002-n\\tlemma\\tassento\n",
             encoding="utf-8",
         )
         resultado = importar_openwordnet_tsv(
@@ -121,7 +121,7 @@ class TesteGrandeBaseLexical(unittest.TestCase):
             root = Path(pasta)
             arquivo = root / "lexico"
             arquivo.write_text(
-                "".join(f"termo_{i:05d}\\n" for i in range(10_000)),
+                "".join(f"termo_{i:05d}\n" for i in range(10_000)),
                 encoding="utf-8",
             )
             with Lexicon(root / "base.sqlite3") as lexicon:
@@ -177,7 +177,7 @@ class TestesAtualizacaoAssinada(unittest.TestCase):
                     "op": "upsert", "source": "fonte-v2", "id": "nova",
                     "lemma": "nova", "pos": "adjetivo", "license": "MIT",
                     "version": "2",
-                }) + "\\n"
+                }) + "\n"
             ).encode()
             manifesto = {
                 "schema_version": 2, "delta_sha256": hashlib.sha256(delta).hexdigest(),
