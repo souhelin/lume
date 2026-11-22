@@ -390,9 +390,11 @@ class Lexicon:
                     raise ValueError("destino e tipo de relação são obrigatórios")
                 self._db.execute(
                     """
-                    INSERT OR IGNORE INTO relacoes
+                    INSERT INTO relacoes
                         (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
                     VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(origem_id, destino_id, tipo, fonte_id) DO UPDATE SET
+                        licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
                     """,
                     (
                         entrada.identificador, destino, tipo, entrada.fonte,
@@ -403,9 +405,11 @@ class Lexicon:
                 if contexto.strip():
                     self._db.execute(
                         """
-                        INSERT OR IGNORE INTO contextos
+                        INSERT INTO contextos
                             (entrada_id, contexto, fonte_id, licenca, versao_fonte)
                         VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(entrada_id, contexto, fonte_id) DO UPDATE SET
+                            licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
                         """,
                         (
                             entrada.identificador, contexto.strip(), entrada.fonte,
@@ -434,9 +438,11 @@ class Lexicon:
                 raise ValueError("as duas entradas da relação precisam existir")
             self._db.execute(
                 """
-                INSERT OR IGNORE INTO relacoes
+                INSERT INTO relacoes
                     (origem_id, destino_id, tipo, fonte_id, licenca, versao_fonte)
                 VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(origem_id, destino_id, tipo, fonte_id) DO UPDATE SET
+                    licenca=excluded.licenca, versao_fonte=excluded.versao_fonte
                 """,
                 (
                     origem_id, destino_id, tipo, fonte_id,
