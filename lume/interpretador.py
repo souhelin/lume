@@ -15,6 +15,9 @@ from .erros import (
 )
 from .nos import (
     Atribuir,
+    AtribuirIndice,
+    Tentar,
+    Lancar,
     Binaria,
     Chamada,
     Condicional,
@@ -113,6 +116,39 @@ class Interpretador:
             valor = self._avaliar(no.valor)
             self.ambiente.atribuir(no.nome, valor)
             return
+
+        if isinstance(no, AtribuirIndice):
+            colecao = self._avaliar(no.colecao)
+            indice = self._avaliar(no.indice)
+            valor = self._avaliar(no.valor)
+            if not isinstance(colecao, list):
+                raise ErroExecucao("atribuição por índice só é permitida em listas")
+            if type(indice) is not int:
+                raise ErroExecucao("o índice de atribuição precisa ser inteiro")
+            try:
+                colecao[indice] = valor
+            except IndexError as erro:
+                raise ErroExecucao(f"índice {indice} fora dos limites da lista") from erro
+            return
+
+        if isinstance(no, Tentar):
+            try:
+                self._executar_bloco(no.corpo, self.ambiente)
+            except ErroExecucao as erro:
+                if not no.captura:
+                    raise
+                local = Ambiente(self.ambiente)
+                if no.nome_erro:
+                    local.definir(no.nome_erro, str(erro))
+                self._executar_bloco(no.captura, local)
+            finally:
+                if no.finalmente:
+                    self._executar_bloco(no.finalmente, self.ambiente)
+            return
+
+        if isinstance(no, Lancar):
+            valor = self._avaliar(no.valor)
+            raise ErroExecucao(self._formatar(valor))
 
         if isinstance(no, ExpressaoInstrucao):
             self._avaliar(no.expressao)

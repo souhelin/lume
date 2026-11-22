@@ -218,6 +218,23 @@ class TestesInterpretacaoSemantica(unittest.TestCase):
         )
         self.assertEqual(saidas, ["5"])
 
+    def test_ir_e_validador_suportam_atribuicao_por_indice(self) -> None:
+        interpretador, saidas = self.criar_interpretador()
+        interpretador.executar(
+            "crie uma variável chamada itens com valor [1, 2]\n"
+            "itens[0] = 8\n"
+            "mostre itens"
+        )
+        self.assertEqual(saidas, ["[8, 2]"])
+
+    def test_ir_e_validador_suportam_tratamento_de_erros(self) -> None:
+        interpretador, saidas = self.criar_interpretador()
+        interpretador.executar(
+            'tente\n lance "erro esperado"\ncapture falha\n'
+            'mostre "capturado"\nfinalmente\nmostre "finalizado"\nfim'
+        )
+        self.assertEqual(saidas, ["capturado", "finalizado"])
+
     def test_atribuicao_a_nome_inexistente_e_rejeitada(self) -> None:
         compilador = CompiladorSemantico()
         with self.assertRaisesRegex(ErroSemantico, "não foi declarada"):

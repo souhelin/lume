@@ -178,5 +178,30 @@ class TestesLume(unittest.TestCase):
         with self.assertRaisesRegex(ErroExecucao, "nome não definido"):
             self.executar("novo = 3")
 
+    def test_atribuicao_por_indice(self) -> None:
+        fonte = "definir itens como [1, 2, 3]\nitens[1] = 9\nmostrar itens"
+        self.assertEqual(self.executar(fonte), ["[1, 9, 3]"])
+
+    def test_atribuicao_por_indice_invalido(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "fora dos limites"):
+            self.executar("definir itens como [1]\nitens[4] = 9")
+
+    def test_atribuicao_por_indice_em_texto_e_rejeitada(self) -> None:
+        with self.assertRaisesRegex(ErroExecucao, "só é permitida em listas"):
+            self.executar('definir texto como "lume"\ntexto[0] = "L"')
+
+    def test_tratamento_estruturado_de_erro(self) -> None:
+        fonte = 'tente\n lance "falha controlada"\ncapture erro\n mostrar erro\nfim'
+        self.assertEqual(self.executar(fonte), ["Erro de execução: falha controlada"])
+
+    def test_finalmente_e_executado_apos_erro(self) -> None:
+        fonte = 'tente\n lance "falha"\nfinalmente\n mostrar "finalizado"\nfim'
+        with self.assertRaisesRegex(ErroExecucao, "falha"):
+            self.executar(fonte)
+
+    def test_finalmente_e_executado_apos_captura(self) -> None:
+        fonte = 'tente\n lance "falha"\ncapture erro\n mostrar "capturado"\nfinalmente\n mostrar "finalizado"\nfim'
+        self.assertEqual(self.executar(fonte), ["capturado", "finalizado"])
+
 if __name__ == "__main__":
     unittest.main()

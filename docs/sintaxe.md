@@ -116,3 +116,32 @@ fim da repetição
 O front-end também reconhece condições iniciadas por "se ... então", "caso contrário", funções introduzidas por "defina uma função chamada ...", retornos com "retorne" e operações básicas sobre listas. A lista de padrões completos e os exemplos estão em [semantica.md](semantica.md).
 
 Esses padrões não substituem a gramática tradicional nem permitem qualquer frase livre. Uma frase fora dos padrões é rejeitada; relações incompletas ou conflituosas geram diagnósticos semânticos. A forma canônica pode continuar usando a gramática estruturada e ambos os front-ends compartilham o mesmo executor.
+
+
+## Atribuição por índice
+
+Listas permitem atualizar um elemento existente usando um índice inteiro:
+
+```text
+definir notas como [7, 8, 9]
+notas[1] = 10
+mostrar notas
+```
+
+A atribuição por índice só aceita listas mutáveis. Textos e tuplas não podem ser alterados por índice. Índices negativos seguem a mesma regra de acesso; índices fora dos limites produzem erro.
+
+## Tratamento estruturado de erros
+
+Um bloco `tente` pode capturar erros de execução e executar uma etapa final:
+
+```text
+tente
+    lance "não foi possível concluir"
+capture erro
+    mostrar erro
+finalmente
+    mostrar "etapa encerrada"
+fim
+```
+
+`capture` pode receber um identificador opcional para armazenar a mensagem do erro. `finalmente` é opcional e é executado mesmo quando o erro não é capturado. `lance` interrompe o fluxo atual com um erro de execução. O mecanismo captura erros da linguagem, não exceções arbitrárias do processo hospedeiro.

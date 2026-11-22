@@ -10,7 +10,7 @@ from typing import Any
 from .erros import ErroAmbiguidade, ErroSemantico
 from .lexer import analisar_lexico
 from .nos import (
-    Atribuir, Binaria, Chamada, Condicional, Continuar, Definir,
+    Atribuir, AtribuirIndice, Tentar, Lancar, Binaria, Chamada, Condicional, Continuar, Definir,
     ExpressaoInstrucao, FuncaoDeclaracao, Indice, Interromper, Enquanto,
     ListaLiteral, Literal, Mostrar, ParaCada, Programa, Retornar, Unaria,
     Variavel,
@@ -70,7 +70,7 @@ def detectar_sintaxe_semantica(fonte: str) -> bool:
         "defina", "atribua", "atribui", "atualize", "atualiza", "some", "somar",
         "subtraia", "subtrai", "multiplique", "multiplica", "divida",
         "divide", "compare", "compara", "repita", "repete", "adicione",
-        "adiciona", "remova", "remove", "retorne", "devolva",
+        "adiciona", "remova", "remove", "retorne", "devolva", "tente", "lance",
     )
     for linha in fonte.splitlines():
         texto = normalizar_termo(linha).lstrip()
@@ -449,6 +449,7 @@ class TradutorSemantico:
         comandos_legados = {
             "mostrar", "exibir", "definir", "se", "senão", "enquanto",
             "para", "função", "retornar", "interromper", "continuar", "fim",
+            "tente", "capture", "finalmente", "lance",
         }
         if primeiro and primeiro.group(1).casefold() not in comandos_legados:
             palavra = primeiro.group(1)
@@ -494,6 +495,27 @@ class _Validador:
                     )
                 contexto.tipos[nome] = self._expressao(valor, contexto)
                 contexto.ultima_variavel = nome
+            elif op == "atribuir_indice":
+                colecao = self._expressao(args[0], contexto)
+                indice = self._expressao(args[1], contexto)
+                self._expressao(args[2], contexto)
+                if colecao is not None and colecao is not list:
+                    raise ErroSemantico("atribuição por índice exige uma lista")
+                if indice is not None and indice is not int:
+                    raise ErroSemantico("o índice de atribuição precisa ser inteiro")
+            elif op == "tentar":
+                base = contexto.copiar()
+                self._bloco(args[0].instrucoes, base, em_funcao, nivel_lacos)
+                captura = contexto.copiar()
+                if args[1]:
+                    captura.variaveis.add(args[1])
+                    captura.tipos[args[1]] = str
+                self._bloco(args[2].instrucoes, captura, em_funcao, nivel_lacos)
+                self._bloco(args[3].instrucoes, contexto.copiar(), em_funcao, nivel_lacos)
+            elif op == "lancar":
+                tipo = self._expressao(args[0], contexto)
+                if tipo is not None and tipo is not str:
+                    raise ErroSemantico("'lance' exige uma mensagem em texto")
             elif op == "exibir":
                 for valor in args[0]:
                     self._expressao(valor, contexto)

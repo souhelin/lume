@@ -112,3 +112,23 @@ class Indice:
 class Atribuir:
     nome: str
     valor: object
+
+
+@dataclass(slots=True)
+class AtribuirIndice:
+    colecao: object
+    indice: object
+    valor: object
+
+
+@dataclass(slots=True)
+class Tentar:
+    corpo: list[object]
+    nome_erro: str | None
+    captura: list[object]
+    finalmente: list[object]
+
+
+@dataclass(slots=True)
+class Lancar:
+    valor: object
