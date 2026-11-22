@@ -25,6 +25,11 @@ class TestesOfflineFirst(unittest.TestCase):
         self.assertEqual(saida, ["42"])
         self.assertIsNone(interpretador._cliente_rede)
 
+    def test_validador_semantico_reconhece_funcoes_online_sem_executa_las(self):
+        semantico = InterpretadorSemantico(Interpretador())
+        resultado = semantico.verificar('mostrar http_obter("https://api.exemplo.com/status")\n')
+        self.assertIsNotNone(resultado)
+
     def test_programa_semantico_executa_sem_rede(self):
         saida = []
         interpretador = Interpretador(saida=saida.append)
