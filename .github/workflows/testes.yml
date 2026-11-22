@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Instalar o pacote
-        run: python -m pip install '.[updates]'
+        run: python -m pip install '.[updates,rdf]'
       - name: Construir pacote wheel
         run: python -m pip wheel . --no-deps --wheel-dir dist
       - name: Validar wheel em ambiente isolado
@@ -50,8 +50,9 @@ jobs:
           python benchmarks/benchmark_lexicon.py --iteracoes 1000
 
 
+
   bases-reais:
-    name: Integração com OpenWordNet-PT real
+    name: Integração com OpenWordNet-PT completo
     runs-on: ubuntu-latest
     steps:
       - name: Obter código
@@ -60,15 +61,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Instalar o pacote
-        run: python -m pip install .
-      - name: Baixar exportação pública do OpenWordNet-PT
+      - name: Instalar parser RDF
+        run: python -m pip install '.[rdf]'
+      - name: Baixar os arquivos oficiais OpenWordNet-PT
         run: |
-          curl --fail --location --retry 3 \
-            https://raw.githubusercontent.com/omwn/omw-data/main/wns/por/wn-data-por.tab \
-            --output /tmp/wn-data-por.tab
-          curl --fail --location --retry 3 \
-            https://raw.githubusercontent.com/omwn/omw-data/main/wns/por/LICENSE \
-            --output /tmp/wn-data-por-LICENSE
-      - name: Importar e validar base real
-        run: python scripts/testar_bases_reais.py /tmp/wn-data-por.tab
+          base=https://raw.githubusercontent.com/own-pt/openWordnet-PT/master/data
+          curl --fail --location --retry 3 "$base/own-pt-words.ttl" --output /tmp/words.ttl
+          curl --fail --location --retry 3 "$base/own-pt-synsets.ttl" --output /tmp/synsets.ttl
+          curl --fail --location --retry 3 "$base/own-pt-wordsenses.ttl" --output /tmp/wordsenses.ttl
+          curl --fail --location --retry 3 "$base/own-pt-relations.ttl" --output /tmp/relations.ttl
+      - name: Importar e validar dados reais
+        run: |
+          python scripts/testar_bases_reais.py \
+            /tmp/words.ttl /tmp/synsets.ttl /tmp/wordsenses.ttl /tmp/relations.ttl
