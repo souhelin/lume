@@ -25,9 +25,12 @@ Exemplo de operação:
 ```json
 {"op":"upsert","source":"openwordnet-pt","id":"termo-123","lemma":"termo","pos":"substantivo","definition":"Definição licenciada.","forms":[["termos","plural"]],"contexts":["linguística"]}
 {"op":"delete","source":"openwordnet-pt","id":"registro-antigo"}
+{"op":"upsert_sense","source":"openwordnet-pt","id":"synset-42","pos":"substantivo","definition":"glossa","members":["termo-123","termo-456"]}
+{"op":"upsert_relation","source":"openwordnet-pt","origin":"termo-123","destination":"termo-456","type":"hiperonimo"}
+{"op":"upsert_frequency","source":"openwordnet-pt","form":"termo","value":1.75}
 ```
 
-A operação `upsert` usa os metadados de licença e versão assinados no manifesto. `delete` remove somente a entrada pertencente à fonte indicada. A licença e a versão ficam gravadas por entrada, preservando a proveniência histórica mesmo quando os metadados da fonte avançam.
+Operações aceitas: `upsert`, `delete`, `upsert_sense`, `delete_sense`, `upsert_relation`, `delete_relation`, `upsert_frequency` e `delete_frequency`. A operação `upsert` usa os metadados de licença e versão assinados no manifesto. Exclusões são limitadas à fonte indicada. Licença e versão ficam gravadas em entradas, sentidos, relações e contextos, preservando a proveniência histórica mesmo quando os metadados da fonte avançam.
 
 ## Aplicação e rollback
 
