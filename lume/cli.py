@@ -78,7 +78,7 @@ def executar_arquivo(
             InterpretadorSemantico(Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede)).verificar(fonte)
             print(f"Programa válido: {arquivo}")
             return 0
-        Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or []).executar(programa)
+        Interpretador(diretorio_raiz=arquivo.parent, hosts_rede_permitidos=hosts_rede_permitidos or [], aviso_rede=_avisar_rede).executar(programa)
         return 0
     except ErroLume as erro:
         _mostrar_erro(arquivo, fonte, erro)
