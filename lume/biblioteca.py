@@ -46,6 +46,60 @@ def registrar_biblioteca(interpretador: object) -> None:
     registrar("decimal", 1, 1, lambda valor: float(converter_numero(valor)))
     registrar("tipo", 1, 1, interpretador._tipo)
 
+    def exigir_lexicon() -> object:
+        lexicon = getattr(interpretador, "lexicon", None)
+        if lexicon is None:
+            raise ErroExecucao(
+                "o Lexicon não está carregado; injete Lexicon no Interpretador "
+                "ou execute a CLI com --lexicon CAMINHO"
+            )
+        return lexicon
+
+    def consultar_lexico(termo: object) -> list[str]:
+        if not isinstance(termo, str):
+            raise ErroExecucao("'consultar_lexico' exige um texto")
+        lexicon = exigir_lexicon()
+        correspondencias = lexicon.buscar(termo)
+        resultados: list[str] = []
+        for item in correspondencias:
+            entrada = item.entrada
+            definicao = entrada.definicao or "definição não disponível"
+            resultados.append(
+                f"{entrada.lema} ({entrada.classe_gramatical}): {definicao} "
+                f"[fonte: {entrada.fonte}; licença: {entrada.licenca}; "
+                f"versão: {entrada.versao_fonte}]"
+            )
+        return resultados
+
+    def analisar_lexico(texto: object) -> list[str]:
+        if not isinstance(texto, str):
+            raise ErroExecucao("'analisar_lexico' exige um texto")
+        from .desambiguacao import DesambiguadorContextual
+        resultados = DesambiguadorContextual(exigir_lexicon()).analisar(texto)
+        saida: list[str] = []
+        for resultado in resultados:
+            if resultado.selecionado is None:
+                candidatos = "; ".join(
+                    f"{item.correspondencia.entrada.lema} "
+                    f"({item.correspondencia.entrada.classe_gramatical}, "
+                    f"sentido={item.identificador_sentido or 'sem synset'}, "
+                    f"pontuação={item.pontuacao:g})"
+                    for item in resultado.candidatos
+                )
+                saida.append(f"{resultado.token}: ambíguo — {candidatos}")
+            else:
+                item = resultado.selecionado
+                entrada = item.correspondencia.entrada
+                definicao = item.definicao or entrada.definicao or "definição não disponível"
+                saida.append(
+                    f"{resultado.token}: {entrada.lema} "
+                    f"({entrada.classe_gramatical}) — {definicao}"
+                )
+        return saida
+
+    registrar("consultar_lexico", 1, 1, consultar_lexico)
+    registrar("analisar_lexico", 1, 1, analisar_lexico)
+
     def perguntar(mensagem: object = "") -> str:
         try:
             return interpretador.entrada(interpretador._formatar(mensagem))
