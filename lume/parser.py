@@ -67,13 +67,13 @@ class AnalisadorSintatico:
             self._avancar()
             return Atribuir(palavra, self._expressao())
 
-        if self._espiar_token(1).tipo == "ABRE_COLCHETE":
+        if palavra not in {"mostrar", "exibir"} and self._espiar_token(1).tipo == "ABRE_COLCHETE":
             alvo = self._posfixa(self._primaria())
             if self._corresponde("IGUAL"):
                 if not isinstance(alvo, Indice):
                     raise ErroSintatico("o destino da atribuição precisa ser um índice de coleção", token.posicao)
                 return AtribuirIndice(alvo.colecao, alvo.indice, self._expressao())
-            raise ErroSintatico("esperava '=' depois do índice", self._atual().posicao)
+            return ExpressaoInstrucao(alvo)
 
         if palavra in {"mostrar", "exibir"}:
             self._avancar()
