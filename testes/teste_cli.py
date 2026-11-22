@@ -105,6 +105,23 @@ class TestesCLI(unittest.TestCase):
         self.assertEqual(resultado.returncode, 1)
         self.assertIn("ciclo de importação", resultado.stderr)
 
+    def test_verificar_e_executar_funcao_importada(self) -> None:
+        with tempfile.TemporaryDirectory() as diretorio:
+            raiz = Path(diretorio)
+            (raiz / "matematica.lume").write_text(
+                'função dobro(numero) faça\nretornar numero * 2\nfim\n',
+                encoding="utf-8",
+            )
+            principal = raiz / "principal.lume"
+            principal.write_text(
+                'importar "matematica.lume"\nmostrar dobro(3)\n', encoding="utf-8"
+            )
+            verificacao = self.executar_cli("--verificar", str(principal))
+            execucao = self.executar_cli(str(principal))
+        self.assertEqual(verificacao.returncode, 0, verificacao.stderr)
+        self.assertEqual(execucao.returncode, 0, execucao.stderr)
+        self.assertEqual(execucao.stdout.strip(), "6")
+
     def test_verificar_rejeita_modulo_ausente(self) -> None:
         with tempfile.TemporaryDirectory() as diretorio:
             principal = self.arquivo_temporario(
