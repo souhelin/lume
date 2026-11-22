@@ -14,6 +14,7 @@ from lume import (
     EntradaLexical, FonteLexical, Interpretador, InterpretadorSemantico,
     Lexicon, DesambiguadorContextual, importar_fserb_lexico,
     importar_fserb_conjugacoes, importar_openwordnet_tsv,
+    importar_openwordnet_ttl,
 )
 
 
@@ -67,6 +68,51 @@ class TestesImportacaoEDesambiguacao(unittest.TestCase):
         self.assertEqual(len(correspondencias), 1)
         sentidos = self.lexicon.sentidos(correspondencias[0].entrada.identificador)
         self.assertEqual(len(sentidos), 2)
+
+    @unittest.skipUnless(importlib.util.find_spec("rdflib"), "extra rdf não instalado")
+    def test_importa_turtle_com_glossas_e_relacoes(self):
+        palavras = self.root / "words.ttl"
+        synsets = self.root / "synsets.ttl"
+        sentidos = self.root / "wordsenses.ttl"
+        relacoes = self.root / "relations.ttl"
+        prefixos = (
+            "@prefix own-pt: <https://w3id.org/own/own-pt/instances/> .\\n"
+            "@prefix owns: <https://w3id.org/own/schema/> .\\n"
+        )
+        palavras.write_text(
+            prefixos +
+            'own-pt:word-casa-n a owns:Word ; owns:lemma "casa"@pt ; owns:pos "n" .\\n'
+            'own-pt:word-lar-n a owns:Word ; owns:lemma "lar"@pt ; owns:pos "n" .\\n'
+            'own-pt:wordsense-0001-n-1 owns:word own-pt:word-casa-n .\\n'
+            'own-pt:wordsense-0002-n-1 owns:word own-pt:word-lar-n .\\n',
+            encoding="utf-8",
+        )
+        synsets.write_text(
+            prefixos +
+            'own-pt:synset-0001-n a owns:NounSynset ; owns:synsetId "0001-n" ; owns:gloss "moradia"@pt .\\n'
+            'own-pt:synset-0002-n a owns:NounSynset ; owns:synsetId "0002-n" ; owns:gloss "habitação"@pt .\\n',
+            encoding="utf-8",
+        )
+        sentidos.write_text(
+            prefixos +
+            'own-pt:synset-0001-n owns:containsWordSense own-pt:wordsense-0001-n-1 .\\n'
+            'own-pt:synset-0002-n owns:containsWordSense own-pt:wordsense-0002-n-1 .\\n',
+            encoding="utf-8",
+        )
+        relacoes.write_text(
+            prefixos +
+            'own-pt:synset-0001-n owns:similarTo own-pt:synset-0002-n .\\n',
+            encoding="utf-8",
+        )
+        resultado = importar_openwordnet_ttl(
+            self.lexicon, palavras, synsets, sentidos, relacoes,
+            versao="fixture-ttl-1", confirmar_direitos=True,
+        )
+        casa = self.lexicon.buscar("casa")[0].entrada
+        self.assertEqual(len(self.lexicon.sentidos(casa.identificador)), 1)
+        self.assertIn("moradia", self.lexicon.sentidos(casa.identificador)[0]["definicao"])
+        self.assertGreater(resultado.relacoes_importadas, 0)
+        self.assertEqual(self.lexicon.estatisticas()["relacoes"], 1)
 
     def test_desambiguacao_usa_pista_sintatica_e_preserva_duvida(self):
         fonte = FonteLexical(
