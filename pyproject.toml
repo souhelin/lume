@@ -24,6 +24,7 @@ classifiers = [
 
 [project.optional-dependencies]
 updates = ["cryptography>=42"]
+rdf = ["rdflib>=7"]
 
 [project.scripts]
 lume = "lume.cli:main"
