@@ -31,12 +31,12 @@ A CLI informa os hosts autorizados na saída de diagnóstico. Sem `--permitir-re
 ### Pela API Python
 
 ```python
-from lume import Interpretador, PermissoesRede
+from lume import Interpretador
 
-permissoes = PermissoesRede(["api.exemplo.com"])
 interpretador = Interpretador(hosts_rede_permitidos=["api.exemplo.com"])
 
-# Uma permissão pode ser revogada durante a execução pelo hospedeiro.
+# O hospedeiro pode conceder ou revogar hosts durante a execução.
+interpretador.permissoes_rede.permitir_host("arquivos.exemplo.com")
 interpretador.permissoes_rede.revogar_host("api.exemplo.com")
 ```
 
