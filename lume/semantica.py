@@ -34,6 +34,7 @@ FUNCOES_NATIVAS: dict[str, tuple[int, int | None]] = {
     "ler_arquivo": (1, 1), "escrever_arquivo": (2, 2),
     "anexar_arquivo": (2, 2), "existe_arquivo": (1, 1),
     "ordenar": (1, 1), "inverter": (1, 1), "juntar": (2, 2),
+    "http_obter": (1, 1), "http_enviar": (2, 2), "baixar": (2, 2),
 }
 TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
     "comprimento": int, "texto": str, "tipo": str, "perguntar": str,
@@ -43,6 +44,7 @@ TIPOS_RETORNO_NATIVAS: dict[str, type | None] = {
     "maiusculas": str, "minusculas": str,
     "ler_arquivo": str, "escrever_arquivo": type(None),
     "anexar_arquivo": type(None), "existe_arquivo": bool,
+    "http_obter": str, "http_enviar": str, "baixar": int,
 }
 
 
